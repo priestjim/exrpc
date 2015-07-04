@@ -1,0 +1,21 @@
+# ExRPC
+
+`ExRPC` is an out-of band messaging library that uses TCP ports to
+send and receive data between Elixir nodes. It behaves mostly like the
+`RPC` module but uses differente ports and processes for different nodes,
+effectively spreading the load to multiple processes instead of the single
+`rex` server.
+
+## Installation
+
+  1. Add exrpc to your list of dependencies in mix.exs:
+
+        def deps do
+          [{:exrpc, "~> 1.0.0"}]
+        end
+
+  2. Ensure exrpc is started before your application:
+
+        def application do
+          [applications: [:exrpc]]
+        end
