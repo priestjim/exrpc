@@ -6,21 +6,60 @@
 
 defmodule ExRPC.Supervisor.Acceptor do
 
+  @moduledoc """
+    The acceptor supervisor, responsible for starting, stopping and
+    supervising local RPC acceptor processes
+  """
+
   # Use the Supervisor behaviour
   use Supervisor
 
-  # Worker flags
-  @child_spec [restart: :permanent, timeout: 5_000]
+  # Supervision attributes
+  @child_spec [restart: :transient, timeout: 5_000]
+  @strategy [strategy: :simple_one_for_one, max_restarts: 100, max_seconds: 1]
 
-  # API functions
-  @doc "Starts the application supervisor"
+  # ===================================================
+  # Public API
+  # ===================================================
+
+  @doc """
+    Starts the RPC acceptor supervisor
+  """
+  @spec start_link() :: {:ok, pid}
   def start_link() do
-    Supervisor.start_link(__MODULE__, :ok, [name: __MODULE__])
+    Supervisor.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  # Callback fuctions
-  def init(:ok) do
-    supervise([], [strategy: :one_for_one, max_restarts: 100, max_seconds: 1])
+  @doc """
+    Starts a local RPC acceptor process
+  """
+  @spec start_child(tuple, node) :: {:ok, pid}
+  def start_child(client_ip, node) when is_tuple(client_ip) and is_atom(node) do
+    {:ok, pid} = Supervisor.start_child(__MODULE__, [client_ip,node])
+    {:ok, pid}
+  end
+
+  @doc """
+    Terminates a local RPC acceptor process and unregisters that process
+    from the supervisor
+  """
+  @spec stop_child(pid) :: :ok
+  def stop_child(pid) when is_pid(pid) do
+    :ok = Supervisor.terminate_child(__MODULE__, pid)
+    :ok
+  end
+
+  # ===================================================
+  # Behaviour callbacks
+  # ===================================================
+
+  @doc """
+    Initializes the supervisor using the simple one for one strategy, allowing
+    to dynamically register acceptors, one per local server
+  """
+  @spec init(nil) :: tuple
+  def init(nil) do
+    supervise([worker(ExRPC.Acceptor, [], [{:name, ExRPC.Acceptor}|@child_spec])], @strategy)
   end
 
 end
