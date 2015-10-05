@@ -6,24 +6,26 @@
 
 defmodule ExRPC do
 
-  # Use the Application behaviour
-  use Application
-
   @moduledoc """
-    `ExRPC` is an out-of band messaging library that uses TCP ports to
-    send and receive data between Elixir nodes. It behaves mostly like the
-    `RPC` module but uses differente ports and processes for different nodes,
-    effectively spreading the load to multiple processes instead of pushin data
-    from every remote node/RPC call to the single `rex` server.
+    ExRPC is an out-of band RPC application and library that uses multiple TCP
+    ports to send and receive data between Elixir nodes. It behaves mostly like Erlang's
+    `RPC` module but uses different ports and processes for different nodes,
+    effectively spreading the load to X processes for X nodes, instead of pushing data
+    from every remote node/RPC call into a single `rex` server.
 
     You can generally use `ExRPC.call` and `ExRPC.cast` the same way you use
     the `RPC` library, in the following manner:
 
-    iex> ExRPC.call(node, :erlang, :is_atom, [:ok])
-    {:ok, true}
+      iex> ExRPC.call(node, :erlang, :is_atom, [:ok])
+      {:ok, true}
 
-    iex> ExRPC.cast(node, :os, :timestamp)
-    :ok
+      iex> ExRPC.cast(node, :os, :timestamp)
+      :true
+
+    ExRPC will try to detect possible issues with the TCP channel on which
+    it operates, both by closely monitoring `gen_tcp` timeouts and by testing
+    connectivity through the Erlang VM for `every single request`, thus ensuring
+    proper response to changes in channel state.
   """
 
   # ===================================================
@@ -31,49 +33,52 @@ defmodule ExRPC do
   # ===================================================
 
   @doc """
-    Starts the `ExRPC` application manually for
-    testing and rapid iteration
-  """
-  @spec start() :: :ok
-  def start() do
-    {:ok, _apps} = Application.ensure_all_started(:exrpc)
-    :ok
-  end
+    Performs an ExRPC `call`, by automatically connecting to a remote `node`,
+    performing a "protected" {`m`,`f`,`a`} call and returning the result within
+    `recv_to` milliseconds.
 
-  @doc """
-    Performs an `{m,f,a}` RPC call to a remote node and waits `recv_to` milliseconds
-    for the results.
+    It is important to understand that receiving {:badrpc, :timeout} does not guarantee
+    that the RPC call failed, just that it took it longer than it was expected to execute.
 
-    The RPC call is performed on a separate process and is protected
+    If the RPC calls finishes and sends the result back to the client, those results will be dropped.
   """
-  @spec call(node, atom, atom, list, pos_integer | nil, pos_integer | nil) :: {:ok, any} | {:badtcp, any} | {:badrpc, any}
+  @spec call(node, module, function, list, timeout | nil, timeout | nil) :: {:badtcp | :badrpc, any} | any
   def call(node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
-  when is_atom(node) and is_atom(m) and is_atom(f) and is_list(a) do
-    :ok
+  when is_atom(node) and is_atom(m) and
+       is_atom(f) and is_list(a) and
+       (is_nil(recv_to) or is_integer(recv_to) or recv_to === :infinity) and
+       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+  do
+    ExRPC.Client.call(node, m, f, a, recv_to, send_to)
   end
 
   @doc """
-    Performs an `{m,f,a}` RPC cast to a remote node. The results of the function call are **ignored** and
-    never communicated back.
-
-    The RPC cast is performed on a separate process and is protected
+    Performs an ExRPC `cast`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
+    (an asynchronous cast).
   """
-  @spec cast(node, atom, atom, list, pos_integer | nil) :: :ok | {:badtcp, any} | {:badrpc, any}
+  @spec cast(node, module, function, list, timeout | nil) :: true
   def cast(node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(node) and is_atom(m) and is_atom(f) and is_list(a) do
-    :ok
+  when is_atom(node) and is_atom(m) and
+       is_atom(f) and is_list(a) and
+       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+  do
+    ExRPC.Client.cast(node, m, f, a, send_to)
   end
 
-  # ===================================================
-  # Behaviour callbacks
-  # ===================================================
-
   @doc """
-    Starts the ExRPC application supervisor
+    Performs an ExRPC `safe_cast`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
+    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
+    return an error if the connection to the remote node fails (hence the `safe` prefix).
   """
-  @spec start(atom, list) :: {:ok, pid}
-  def start(_type, _args) do
-    ExRPC.Supervisor.Application.start_link()
+  @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def safe_cast(node, m, f, a \\ [], send_to \\ nil)
+  when is_atom(node) and is_atom(m) and
+       is_atom(f) and is_list(a) and
+       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+  do
+    ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end
 
 end

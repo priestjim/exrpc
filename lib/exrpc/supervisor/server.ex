@@ -4,11 +4,11 @@
 # Copyright 2015 Panagiotis Papadomitsos. All Rights Reserved.
 #
 
-defmodule ExRPC.Supervisor.Acceptor do
+defmodule ExRPC.Supervisor.Server do
 
   @moduledoc """
-    The acceptor supervisor, responsible for starting, stopping and
-    supervising local RPC acceptor processes
+    The server supervisor, responsible for starting, stopping and
+    supervising local RPC server processes
   """
 
   # Use the Supervisor behaviour
@@ -23,7 +23,7 @@ defmodule ExRPC.Supervisor.Acceptor do
   # ===================================================
 
   @doc """
-    Starts the RPC acceptor supervisor
+    Starts the RPC server supervisor
   """
   @spec start_link() :: {:ok, pid}
   def start_link() do
@@ -31,16 +31,18 @@ defmodule ExRPC.Supervisor.Acceptor do
   end
 
   @doc """
-    Starts a local RPC acceptor process
+    Starts a local RPC server process and returns the `gen_tcp` port
+    allocated to it
   """
-  @spec start_child(tuple, node) :: {:ok, pid}
-  def start_child(client_ip, node) when is_tuple(client_ip) and is_atom(node) do
-    {:ok, pid} = Supervisor.start_child(__MODULE__, [client_ip,node])
-    {:ok, pid}
+  @spec start_child(node) :: {:ok, :inet.port_number}
+  def start_child(node) when is_atom(node) do
+    {:ok, pid} = Supervisor.start_child(__MODULE__, [node])
+    {:ok, port} = ExRPC.Server.get_port(pid)
+    {:ok, port}
   end
 
   @doc """
-    Terminates a local RPC acceptor process and unregisters that process
+    Terminates a local RPC server process and unregisters that process
     from the supervisor
   """
   @spec stop_child(pid) :: :ok
@@ -55,11 +57,11 @@ defmodule ExRPC.Supervisor.Acceptor do
 
   @doc """
     Initializes the supervisor using the simple one for one strategy, allowing
-    to dynamically register acceptors, one per local server
+    to dynamically register servers per remote client
   """
   @spec init(nil) :: tuple
   def init(nil) do
-    supervise([worker(ExRPC.Acceptor, [], [{:name, ExRPC.Acceptor}|@child_spec])], @strategy)
+    supervise([worker(ExRPC.Server, [], [{:name, ExRPC.Server}|@child_spec])], @strategy)
   end
 
 end

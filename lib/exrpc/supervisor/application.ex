@@ -10,14 +10,16 @@ defmodule ExRPC.Supervisor.Application do
     The `ExRPC` application supervisor, responsible for starting, stopping and
     supervising the `ExRPC` process family, comprised of:
 
-    - The **Client** supervisor, responsible for launching and supervising per
+    - The `Client` supervisor, responsible for launching and supervising per
     remote node ExRPC connections
-    - The **Server** supervisor, responsible for launching and supervising incoming
+    - The `Server` supervisor, responsible for launching and supervising incoming
     remote connection requests
-    - The **Acceptor** supervisor, responsible for launching and supervising the server acceptors,
+    - The `Acceptor` supervisor, responsible for launching and supervising the server acceptors,
     in an one-to-one Server-Acceptor fashion
-    - The **Dispatcher** server, a GenServer process used for serializing initialization of remote
+    - The `Dispatcher` server, a GenServer process used for serializing initialization of remote
     `ExRPC` connections
+    - A named Task.Supervisor task supervisor, responsible for launching workers requested by clients
+    in remote nodes
   """
 
   # Use the Supervisor behaviour
@@ -48,10 +50,16 @@ defmodule ExRPC.Supervisor.Application do
   """
   @spec init(nil) :: tuple
   def init(nil) do
-    children = [supervisor(ExRPC.Supervisor.Server, [], [{:name, ExRPC.Supervisor.Server}|@child_spec]),
+    children = [
+      supervisor(Task.Supervisor, [[name: ExRPC.Supervisor.ClientWorker]], [{:name, ExRPC.Supervisor.ClientWorker},
+                 {:id, ExRPC.Supervisor.ClientWorker}|@child_spec]),
+      supervisor(Task.Supervisor, [[name: ExRPC.Supervisor.ServerWorker]], [{:name, ExRPC.Supervisor.ServerWorker},
+                 {:id, ExRPC.Supervisor.ServerWorker}|@child_spec]),
       supervisor(ExRPC.Supervisor.Acceptor, [], [{:name, ExRPC.Supervisor.Acceptor}|@child_spec]),
+      supervisor(ExRPC.Supervisor.Server, [], [{:name, ExRPC.Supervisor.Server}|@child_spec]),
       worker(ExRPC.Dispatcher, [], [{:name, ExRPC.Dispatcher}|@child_spec]),
-      supervisor(ExRPC.Supervisor.Client, [], [{:name, ExRPC.Supervisor.Client}|@child_spec])]
+      supervisor(ExRPC.Supervisor.Client, [], [{:name, ExRPC.Supervisor.Client}|@child_spec])
+    ]
     supervise(children, @strategy)
   end
 

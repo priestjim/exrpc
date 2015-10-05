@@ -6,6 +6,9 @@ send and receive data between Elixir nodes. It behaves mostly like the
 effectively spreading the load to multiple processes instead of the single
 `rex` server.
 
+`ExRPC` is full compatible with its sister project, `gen_rpc` as messages can
+transparently be exchanged between an Elixir `ExRPC` node and an Erlang `gen_rpc` node.
+
 ## Installation
 
   1. Add exrpc to your list of dependencies in mix.exs:

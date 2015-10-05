@@ -22,14 +22,6 @@ defmodule ExRPC.Dispatcher do
   end
 
   @doc """
-    Stops the `Dispatcher` server
-  """
-  @spec stop() :: :ok
-  def stop() do
-    GenServer.call(__MODULE__, :stop, :infinity)
-  end
-
-  @doc """
     Starts a new `ExRPC.Client` server through the appropriate
     supervisor.
   """
@@ -43,12 +35,10 @@ defmodule ExRPC.Dispatcher do
   # ===================================================
 
   @doc """
-    Initializes the Dispatcher server, enabling exit trapping
-    in order to clean up gracefully in case of termination
+    Initializes the Dispatcher server
   """
   @spec init(nil) :: {:ok, nil}
   def init(nil) do
-    Process.flag(:trap_exit, true)
     {:ok, nil}
   end
 
@@ -59,21 +49,13 @@ defmodule ExRPC.Dispatcher do
   """
   @spec handle_call({:start_client,node}, tuple, nil) :: {:reply, tuple, nil}
   def handle_call({:start_client,node}, _from, nil) do
-    reply = case Process.whereis(node) do
+    reply = case GenServer.whereis(node) do
       nil ->
         ExRPC.Supervisor.Client.start_child(node)
       pid ->
         {:ok, pid}
       end
     {:reply, reply, nil}
-  end
-
-  @doc """
-    Gracefully stops the Dispatcher server
-  """
-  @spec handle_call(:stop, tuple, nil) :: {:stop, :normal, :ok, nil}
-  def handle_call(:stop, _from, nil) do
-    {:stop, :normal, :ok, nil}
   end
 
 end

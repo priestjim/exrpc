@@ -7,14 +7,17 @@ defmodule ExRPC.Mixfile do
   def project do
     [
       app: :exrpc,
-      description: "ExRPC is an out-of band messaging library that uses TCP ports to send and receive data between Elixir nodes",
-      version: "0.1.0",
+      description: "ExRPC is an out-of band RPC application and library that uses multiple TCP ports to send and receive data between Elixir nodes",
+      version: "1.0.0",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       language: :elixir,
+      elixir: "~> 1.0",
       deps: [],
       aliases: aliases,
       package: package,
+      source_url: "https://github.com/priestjim/exrpc",
+      homepage_url: "https://github.com/priestjim/exrpc",
       elixirc_options: elixirc_options(Mix.env)
     ]
   end
@@ -28,13 +31,8 @@ defmodule ExRPC.Mixfile do
             client_inactivity_timeout: :infinity, # Inactivity timeout for client gen_server
             server_inactivity_timeout: :infinity # Inactivity timeout for server gen_server
       ],
-      registered: [Elixir.ExRPC.Supervisor.Application,
-                   Elixir.ExRPC.Supervisor.Server,
-                   Elixir.ExRPC.Supervisor.Client,
-                   Elixir.ExRPC.Supervisor.Acceptor,
-                   Elixir.ExRPC.Dispatcher
-      ],
-      mod: {ExRPC, []}
+      registered: [Elixir.ExRPC.Dispatcher],
+      mod: {ExRPC.Application, []}
     ]
   end
 
