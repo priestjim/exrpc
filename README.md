@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/priestjim/exrpc.svg)](https://travis-ci.org/priestjim/exrpc)
+
 # ExRPC
 
 `ExRPC` is an out-of band messaging library that uses TCP ports to
