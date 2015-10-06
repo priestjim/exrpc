@@ -74,7 +74,9 @@ $(PLT_FILE):
 ifeq ($(DIALYXIR),)
 	@echo "Dialyxir not found. Installing from source"
 	@git clone $(DIALYXIR_URL) dialyxir && \
-	  cd dialyxir && mix archive.build && mix archive.install && \
+	  cd dialyxir && \
+	  mix archive.build && \
+	  mix archive.install --force && \
 	  rm -fr dialyxir
 endif
 	@mkdir -p _plt

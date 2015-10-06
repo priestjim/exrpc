@@ -13,6 +13,7 @@ script: "make test dialyzer"
 cache:
   directories:
   - _plt
+  - $HOME/.mix/archives
 notifications:
   email:
     - priestjim@gmail.com
