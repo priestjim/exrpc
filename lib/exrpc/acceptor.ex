@@ -9,6 +9,9 @@ defmodule ExRPC.Acceptor do
   # gen_fsm behaviour
   @behaviour :gen_fsm
 
+  # Logger
+  require Logger
+
   # Use records for state - much faster
   require Record
   import Record

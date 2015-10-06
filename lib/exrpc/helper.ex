@@ -6,6 +6,9 @@
 
 defmodule ExRPC.Helper do
 
+  # Logger
+  require Logger
+
   # Default TCP options for both client and server
   @default_tcp_opts [:binary,    # All data communication is binary
     {:packet,4},                 # The packet payload size is 4 bytes
@@ -18,7 +21,6 @@ defmodule ExRPC.Helper do
     {:keepalive, true},          # Keep our channel open
     {:tos, 72},                  # Deliver immediately
     {:active, false}]            # Retrieve data from socket upon request
-
 
   # ===================================================
   # Public API

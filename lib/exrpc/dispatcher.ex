@@ -9,6 +9,9 @@ defmodule ExRPC.Dispatcher do
   # GenServer behaviour
   use GenServer
 
+  # Logger
+  require Logger
+
   # ===================================================
   # Public API
   # ===================================================
