@@ -38,7 +38,7 @@ ERL = $(shell which erl 2> /dev/null)
 ELIXIR = $(shell which elixir 2> /dev/null)
 IEX = $(shell which iex 2> /dev/null)
 DIALYXIR = $(shell mix help 2> /dev/null | grep dialyzer.plt)
-DIALYXIR_URL = git@github.com:jeremyjh/dialyxir.git
+DIALYXIR_URL = https://github.com/jeremyjh/dialyxir.git
 
 ifeq ($(ERL),)
 	$(error "Erlang is not available on this system")

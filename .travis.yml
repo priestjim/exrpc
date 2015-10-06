@@ -10,6 +10,9 @@ branches:
   only:
     - master
 script: "make test dialyzer"
+cache:
+  directories:
+  - _plt
 notifications:
   email:
     - priestjim@gmail.com

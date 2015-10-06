@@ -17,7 +17,7 @@ defmodule ExRPC.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       language: :elixir,
-      elixir: "~> 1.0",
+      elixir: "~> 1.1",
       deps: [],
       aliases: aliases,
       package: package,
