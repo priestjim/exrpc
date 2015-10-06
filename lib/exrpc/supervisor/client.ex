@@ -35,8 +35,7 @@ defmodule ExRPC.Supervisor.Client do
   """
   @spec start_child(node) :: {:ok, pid}
   def start_child(node) when is_atom(node) do
-    {:ok, pid} = Supervisor.start_child(__MODULE__, [node])
-    {:ok, pid}
+    Supervisor.start_child(__MODULE__, [node])
   end
 
   @doc """
@@ -45,8 +44,7 @@ defmodule ExRPC.Supervisor.Client do
   """
   @spec stop_child(pid) :: :ok
   def stop_child(pid) when is_pid(pid) do
-    :ok = Supervisor.terminate_child(__MODULE__, pid)
-    :ok
+    Supervisor.terminate_child(__MODULE__, pid)
   end
 
   # ===================================================

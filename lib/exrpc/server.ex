@@ -9,6 +9,9 @@ defmodule ExRPC.Server do
   # GenServer behaviour
   use GenServer
 
+  # Logger
+  require Logger
+
   # Use records for state - much faster
   require Record
   import Record
@@ -105,7 +108,7 @@ defmodule ExRPC.Server do
       # Link to acceptor, if they die so should we, since we are single-receiver
       # to single-acceptor service
       true = :erlang.link(acceptor_pid)
-      case set_sock_opts(listener_sock, acceptor_sock) do
+      _ = case set_sock_opts(listener_sock, acceptor_sock) do
         :ok ->
           :ok
         {:error, reason} ->

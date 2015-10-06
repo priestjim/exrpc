@@ -1,1 +1,29 @@
+## -*-mode:erlang;coding:utf-8;tab-width:4;c-basic-offset:4;indent-tabs-mode:()-*-
+## ex: set ft=erlang fenc=utf-8 sts=4 ts=4 sw=4 et:
+##
+
+## Enable kernel poll and a few async threads
 +K true
++A 4
+
+## Enable unicode
++pc unicode
++fna
+
+## Favor port parallelism over latency
++spp true
+
+## Enable eager I/O scheduling
++secio true
+
+## Automatic schedulers as of OTP/17
++S 0:0
+
+## Increase max number of processes
++P 2097152
+
+## Increase max number of atoms
++t 2097152
+
+## Increase number of concurrent ports/sockets
+-env ERL_MAX_PORTS 131072

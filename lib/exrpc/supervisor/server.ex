@@ -47,8 +47,7 @@ defmodule ExRPC.Supervisor.Server do
   """
   @spec stop_child(pid) :: :ok
   def stop_child(pid) when is_pid(pid) do
-    :ok = Supervisor.terminate_child(__MODULE__, pid)
-    :ok
+    Supervisor.terminate_child(__MODULE__, pid)
   end
 
   # ===================================================

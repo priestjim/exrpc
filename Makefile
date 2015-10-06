@@ -26,8 +26,6 @@
 # Misc targets
 .PHONY: clean testclean distclean tags rebar
 
-PROJ = $(shell ls -1 src/*.src | sed -e 's/src//' | sed -e 's/\.app\.src//' | tr -d '/')
-
 custom_rules_file = $(wildcard custom.mk)
 ifeq ($(custom_rules_file),custom.mk)
 	include custom.mk
@@ -36,11 +34,28 @@ endif
 # =============================================================================
 # verify that the programs we need to run are installed on this system
 # =============================================================================
-ELIXIR = $(shell which elixir)
+ERL = $(shell which erl 2> /dev/null)
+ELIXIR = $(shell which elixir 2> /dev/null)
+IEX = $(shell which iex 2> /dev/null)
+DIALYXIR = $(shell mix help 2> /dev/null | grep dialyzer.plt)
+DIALYXIR_URL = git@github.com:jeremyjh/dialyxir.git
+
+ifeq ($(ERL),)
+	$(error "Erlang is not available on this system")
+endif
 
 ifeq ($(ELIXIR),)
 	$(error "Elixir is not available on this system")
 endif
+
+ifeq ($(IEX),)
+	$(error "IEx is not available on this system")
+endif
+
+# Dialyzer
+ERLANG_VERSION := $(shell $(ERL) -eval 'io:format("~s~n", [erlang:system_info(otp_release)]), halt().' -noshell)
+ELIXIR_VERSION := $(shell $(ELIXIR) -v | cut -d\  -f2 | sed -e 's/-dev//')
+PLT_FILE := _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt
 
 # =============================================================================
 # Build targets
@@ -50,17 +65,27 @@ all:
 	@MIX_ENV=dev $(ELIXIR) -S mix c
 
 test: epmd
-	@MIX_ENV=test $(ELIXIR) --name exrpc@127.0.0.1 -S mix t
+	@MIX_ENV=test $(ELIXIR) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix t
 
-dialyzer:
-	@MIX_ENV=test $(ELIXIR) -S mix dialyzer | fgrep -v -f $(CURDIR)/dialyzer.ignore
+dialyzer: _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt all
+	@MIX_ENV=dev $(ELIXIR) -S mix d | fgrep -v -f $(CURDIR)/dialyzer.ignore
+
+$(PLT_FILE):
+ifeq ($(DIALYXIR),)
+	@echo "Dialyxir not found. Installing from source"
+	@git clone $(DIALYXIR_URL) dialyxir && \
+	  cd dialyxir && mix archive.build && mix archive.install && \
+	  rm -fr dialyxir
+endif
+	@mkdir -p _plt
+	@MIX_ENV=dev $(ELIXIR) -S mix dialyzer.plt
 
 # =============================================================================
 # Run targets
 # =============================================================================
 
 shell: epmd
-	@MIX_ENV=dev iex --name exrpc@127.0.0.1 -S mix
+	@MIX_ENV=dev $(IEX) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix
 
 # =============================================================================
 # Misc targets

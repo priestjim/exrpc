@@ -71,7 +71,7 @@ defmodule ExRPC.Helper do
     using a chosen node name
   """
   @spec make_process_name(:client | :server | :acceptor, node) :: atom
-  def make_process_name(role, node) when role in [:client, :server, :acceptor] do
+  def make_process_name(role, node) when role in [:server, :acceptor] do
     node_str = node |> Atom.to_string
     role_str = role |> Atom.to_string |> String.capitalize
     "ExRPC." <> role_str <> ".Children." <> node_str |> String.to_atom()

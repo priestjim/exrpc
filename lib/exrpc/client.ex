@@ -9,6 +9,9 @@ defmodule ExRPC.Client do
   # GenServer behaviour
   use GenServer
 
+  # Logger
+  require Logger
+
   # Use records for state - much faster
   require Record
   import Record
@@ -30,8 +33,7 @@ defmodule ExRPC.Client do
   """
   @spec start_link(node) :: {:ok, pid}
   def start_link(server_node) when is_atom(server_node) do
-    name = ExRPC.Helper.make_process_name(:client, server_node)
-    GenServer.start_link(__MODULE__, server_node, name: name, spawn_opt: [priority: :high])
+    GenServer.start_link(__MODULE__, server_node, name: server_node, spawn_opt: [priority: :high])
   end
 
   @doc """
@@ -55,12 +57,12 @@ defmodule ExRPC.Client do
             # We take care of CALL inside the GenServer
             # This is not resilient enough if the caller's mailbox is full
             # but it's good enough for now
-            GenServer.call(new_pid, {{:call,M,F,A}, recv_to, send_to}, :infinity)
+            GenServer.call(new_pid, {{:call,m,f,a}, recv_to, send_to}, :infinity)
           {:error, reason} ->
             reason
         end
       pid ->
-        GenServer.call(pid, {{:call,M,F,A}, recv_to, send_to}, :infinity)
+        GenServer.call(pid, {{:call,m,f,a}, recv_to, send_to}, :infinity)
     end
   end
 
@@ -82,13 +84,13 @@ defmodule ExRPC.Client do
             # We take care of CALL inside the GenServer
             # This is not resilient enough if the caller's mailbox is full
             # but it's good enough for now
-            :ok = GenServer.cast(new_pid, {{:cast,M,F,A}, send_to})
+            :ok = GenServer.cast(new_pid, {{:cast,m,f,a}, send_to})
             true
           {:error, _reason} ->
             true
         end
       pid ->
-        :ok = GenServer.cast(pid, {{:cast,M,F,A}, send_to})
+        :ok = GenServer.cast(pid, {{:cast,m,f,a}, send_to})
         true
     end
   end
@@ -112,12 +114,12 @@ defmodule ExRPC.Client do
             # We take care of CALL inside the GenServer
             # This is not resilient enough if the caller's mailbox is full
             # but it's good enough for now
-            GenServer.call(new_pid, {{:cast,M,F,A}, send_to}, :infinity)
+            GenServer.call(new_pid, {{:cast,m,f,a}, send_to}, :infinity)
           {:error, reason} ->
             reason
         end
       pid ->
-        GenServer.call(pid, {{:cast,M,F,A}, send_to}, :infinity)
+        GenServer.call(pid, {{:cast,m,f,a}, send_to}, :infinity)
     end
   end
 

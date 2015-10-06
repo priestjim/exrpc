@@ -16,11 +16,17 @@ defmodule ExRPC do
     You can generally use `ExRPC.call` and `ExRPC.cast` the same way you use
     the `RPC` library, in the following manner:
 
-      iex> ExRPC.call(node, :erlang, :is_atom, [:ok])
-      {:ok, true}
+      iex> ExRPC.call(node, :erlang, :is_atom, [:ok], 1000)
+      true
 
       iex> ExRPC.cast(node, :os, :timestamp)
-      :true
+      true
+
+      iex> ExRPC.safe_cast(node, :os, :timestamp)
+      true
+
+      iex> ExRPC.safe_cast(:'random_node@127.0.0.1', :os, :timestamp)
+      {:badrpc, :nodedown}
 
     ExRPC will try to detect possible issues with the TCP channel on which
     it operates, both by closely monitoring `gen_tcp` timeouts and by testing

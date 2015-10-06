@@ -5,6 +5,11 @@ defmodule ExRPC.Mixfile do
   @default_elixirc_options [docs: true]
 
   def project do
+    otp_release = :erlang.system_info(:otp_release) |> List.to_integer()
+    {:ok, %Version{major: major,
+      minor: minor,
+      patch: patch}} = Elixir.System.version |> Elixir.Version.parse
+    elixir_release = "#{major}.#{minor}.#{patch}"
     [
       app: :exrpc,
       description: "ExRPC is an out-of band RPC application and library that uses multiple TCP ports to send and receive data between Elixir nodes",
@@ -18,7 +23,38 @@ defmodule ExRPC.Mixfile do
       package: package,
       source_url: "https://github.com/priestjim/exrpc",
       homepage_url: "https://github.com/priestjim/exrpc",
-      elixirc_options: elixirc_options(Mix.env)
+      elixirc_options: elixirc_options(Mix.env),
+      dialyzer: [
+        plt_add_apps: [:asn1,
+          :crypto,
+          :edoc,
+          :erts,
+          :eunit,
+          :inets,
+          :kernel,
+          :mnesia,
+          :public_key,
+          :ssl,
+          :stdlib,
+          :xmerl
+          ],
+        plt_file: "_plt/otp-#{otp_release}_elixir-#{elixir_release}.plt",
+        plt_add_deps: true,
+        flags: ["-Wno_return",
+          "-Wno_unused",
+          "-Wno_improper_lists",
+          "-Wno_fun_app",
+          "-Wno_match",
+          "-Wno_opaque",
+          "-Wno_fail_call",
+          "-Wno_contracts",
+          "-Wno_behaviours",
+          "-Wno_undefined_callbacks",
+          "-Wunmatched_returns",
+          "-Werror_handling",
+          "-Wrace_conditions"
+        ]
+      ]
     ]
   end
 
@@ -61,7 +97,8 @@ defmodule ExRPC.Mixfile do
       c: "compile",
       t: "test",
       tr: "test --trace",
-      d: ["deps.get --only #{Mix.env}", "compile", "test"]
+      d: "dialyzer",
+      f: ["deps.get --only #{Mix.env}", "compile", "test", "dialyzer"]
     ]
   end
 

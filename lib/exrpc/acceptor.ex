@@ -76,6 +76,7 @@ defmodule ExRPC.Acceptor do
     else
       # Now we own the socket
       :ok = :inet.setopts(socket, [{:send_timeout, send_to}|ExRPC.Helper.default_tcp_opts()])
+      :ok = ExRPC.Helper.activate_socket(socket)
       {:next_state, :waiting_for_data, state(state_rec, socket: socket)}
     end
   end
@@ -181,12 +182,12 @@ defmodule ExRPC.Acceptor do
     # which manifests as a timeout on the client side. Wrapping it in a try/catch
     # allows to get a result, even if it's an exit
     result = try do
-        Kernel.apply(m, f, a)
-      catch
-        :throw, what -> what
-        :error, what -> {:'EXIT', {what, :erlang.get_stacktrace()}}
-        :exit, what -> {:'EXIT', what}
-      end
+      Kernel.apply(m, f, a)
+    catch
+      :throw, what -> what
+      :error, what -> {:badrpc, {:'EXIT', {what, :erlang.get_stacktrace()}}}
+      :exit, what -> {:badrpc, {:'EXIT', what}}
+    end
     packet_bin = :erlang.term_to_binary({client_pid, ref, result})
     send(caller, {:call_reply, packet_bin})
   end

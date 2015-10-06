@@ -8,6 +8,13 @@ use Mix.Config
 # if you want to provide default values for your application for third-
 # party users, it should be done in your mix.exs file.
 
+config(:logger,
+  level: :debug,
+  backends: [:console],
+  format: "[$date $time] level=$level $metadata$message\n",
+  compile_time_purge_level: :info,
+  handle_sasl_reports: false)
+
 # Sample configuration:
 #
 #     config :logger,

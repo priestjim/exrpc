@@ -7,6 +7,7 @@ install: "true"
 branches:
   only:
     - master
+script: "make test dialyzer"
 notifications:
   email:
     - priestjim@gmail.com

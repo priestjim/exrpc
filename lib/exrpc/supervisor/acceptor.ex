@@ -35,8 +35,7 @@ defmodule ExRPC.Supervisor.Acceptor do
   """
   @spec start_child(:inet.ip4_address, node) :: {:ok, pid}
   def start_child(client_ip, node) when is_tuple(client_ip) and is_atom(node) do
-    {:ok, pid} = Supervisor.start_child(__MODULE__, [client_ip,node])
-    {:ok, pid}
+    Supervisor.start_child(__MODULE__, [client_ip,node])
   end
 
   @doc """
@@ -45,8 +44,7 @@ defmodule ExRPC.Supervisor.Acceptor do
   """
   @spec stop_child(pid) :: :ok
   def stop_child(pid) when is_pid(pid) do
-    :ok = Supervisor.terminate_child(__MODULE__, pid)
-    :ok
+    Supervisor.terminate_child(__MODULE__, pid)
   end
 
   # ===================================================
