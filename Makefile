@@ -21,7 +21,7 @@
 .PHONY: all test dialyzer xref spec dist
 
 # Run targets
-.PHONY: shell
+.PHONY: shell shell-slave
 
 # Misc targets
 .PHONY: clean testclean distclean tags rebar
@@ -64,7 +64,7 @@ PLT_FILE := _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt
 all:
 	@MIX_ENV=dev $(ELIXIR) -S mix c
 
-test: epmd
+test: epmd all
 	@MIX_ENV=test $(ELIXIR) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix t
 
 dialyzer: _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt all
@@ -88,6 +88,9 @@ endif
 
 shell: epmd
 	@MIX_ENV=dev $(IEX) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix
+
+shell-slave: epmd
+	@MIX_ENV=dev $(IEX) --name exrpc_slave@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix
 
 # =============================================================================
 # Misc targets
