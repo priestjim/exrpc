@@ -9,6 +9,7 @@ install: "true"
 branches:
   only:
     - master
+    - develop
 script: "make test dialyzer"
 cache:
   directories:
