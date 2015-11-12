@@ -66,6 +66,7 @@ PLT_FILE := _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt
 # =============================================================================
 
 all:
+	@MIX_ENV=dev $(MIX) deps.get && $(MIX) local.hex --force 
 	@MIX_ENV=dev $(ELIXIR) -S mix c
 
 test: epmd all
