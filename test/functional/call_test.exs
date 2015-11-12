@@ -12,7 +12,7 @@ defmodule ExRPC.Test.Functional.Call do
   end
 
   test "Call on local node" do
-    assert {_mega, _sec, _micro} = ExRPC.call(invalid, :os, :timestamp, [])
+    assert {_mega, _sec, _micro} = ExRPC.call(master, :os, :timestamp, [])
   end
 
   test "Call on invalid node" do
@@ -46,11 +46,6 @@ defmodule ExRPC.Test.Functional.Call do
   test "Call local with process throw" do
     assert :throwMaster =
       ExRPC.call(master, :erlang, :apply, [fn() -> throw(:throwMaster) end, []])
-  end
-
-  test "Call slave with process exit" do
-    assert :throwSlave =
-      ExRPC.call(slave, :erlang, :apply, [fn() -> throw(:throwSlave) end, []])
   end
 
   test "Call with call timeout" do
