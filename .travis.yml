@@ -5,12 +5,16 @@ elixir:
 otp_release:
   - 18.1
   - 18.0
+  - 17.5
+  - 17.4
+  - 17.3
+  - 17.0
 install: "true"
 branches:
   only:
     - master
     - develop
-script: "make test dialyzer"
+script: "make test"
 cache:
   directories:
   - _plt
