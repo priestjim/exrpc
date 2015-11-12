@@ -15,6 +15,11 @@ branches:
     - master
     - develop
 script: "make test dialyzer"
+after_success:
+  - mix do compile, coveralls.travis
+after_script:
+  - MIX_ENV=docs mix deps.get
+  - MIX_ENV=docs mix inch.report
 cache:
   directories:
   - _plt
@@ -22,4 +27,3 @@ cache:
 notifications:
   email:
     - priestjim@gmail.com
-
