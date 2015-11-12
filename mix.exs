@@ -98,8 +98,8 @@ defmodule ExRPC.Mixfile do
      {:excoveralls, "~> 0.3", only: :test},
 
      # Dev dependencies
-     {:earmark, "~> 0.1", only: :dev :test},
-     {:ex_doc, "~> 0.10", only: :dev :test}]
+     {:earmark, "~> 0.1", only: :dev},
+     {:ex_doc, "~> 0.10", only: :dev}]
   end
 
   defp aliases do
