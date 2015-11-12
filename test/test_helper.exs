@@ -21,15 +21,23 @@ defmodule ExRPC.Test.Helper do
   end
 
   def start_slave_node() do
+    start_slave_node(slave_name, slave)
+  end
+
+  def start_slave_node(node_name, node_full_name) do
     cookie = :erlang.get_cookie |> Atom.to_char_list
     erl_flags = ' -kernel dist_auto_connect once +K true -setcookie ' ++ cookie
-    {:ok, _slave} = :slave.start(slave_ip, slave_name, erl_flags)
+    {:ok, _slave} = :slave.start(slave_ip, node_name, erl_flags)
     :ok = :rpc.call(slave, :code, :add_pathsz, [:code.get_path()])
-    {:ok, _slave_apps} = :rpc.call(slave, Application, :ensure_all_started, [:exrpc])
+    {:ok, _slave_apps} = :rpc.call(node_full_name, Application, :ensure_all_started, [:exrpc])
   end
 
   def stop_slave_node() do
     :ok = :slave.stop(slave)
+  end
+
+  def stop_slave_node(node_name) do
+    :ok = :slave.stop(node_name)
   end
 
 end

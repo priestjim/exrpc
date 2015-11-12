@@ -18,7 +18,7 @@ defmodule ExRPC.Mixfile do
       start_permanent: Mix.env == :prod,
       language: :elixir,
       elixir: "~> 1.1",
-      deps: [],
+      deps: deps,
       aliases: aliases,
       package: package,
       source_url: "https://github.com/priestjim/exrpc",
@@ -89,6 +89,16 @@ defmodule ExRPC.Mixfile do
       links: %{"github" => "https://github.com/priestjim/exrpc"},
       licenses: ["Apache"]
     ]
+  end
+
+  defp deps do
+    [
+     # Test dependencies
+     {:excoveralls, "~> 0.3", only: :test},
+
+     # Dev dependencies
+     {:earmark, "~> 0.1", only: :dev},
+     {:ex_doc, "~> 0.10", only: :dev}]
   end
 
   defp aliases do
