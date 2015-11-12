@@ -54,7 +54,8 @@ defmodule ExRPC.Mixfile do
           "-Werror_handling",
           "-Wrace_conditions"
         ]
-      ]
+      ],
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
