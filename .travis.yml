@@ -14,7 +14,11 @@ branches:
   only:
     - master
     - develop
+
 script: "make test"
+
+after_success:
+  - mix do compile, coveralls.travis
 cache:
   directories:
   - _plt
@@ -22,4 +26,3 @@ cache:
 notifications:
   email:
     - priestjim@gmail.com
-
