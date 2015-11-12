@@ -2,7 +2,7 @@ defmodule ExRPC.Test.Moduledoc do
   use ExUnit.Case
 
   setup_all do
-    ExRPC.Test.Helper.start_slave_node()
+    {:ok, _} = ExRPC.Test.Helper.start_slave_node()
     on_exit fn() ->
       ExRPC.Test.Helper.stop_slave_node()
     end
