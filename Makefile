@@ -69,7 +69,6 @@ all:
 	@MIX_ENV=dev $(ELIXIR) -S mix c
 
 test: epmd all
-	@yes | $(MIX) local.rebar && yes | $(MIX) local.hex 
 	@MIX_ENV=test $(ELIXIR) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix t
 
 dialyzer: _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt all

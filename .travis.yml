@@ -15,6 +15,10 @@ branches:
     - master
     - develop
 
+before_script:
+  - mix local.hex --force
+  - mix deps.get --only test
+
 script: "make test"
 
 after_success:
