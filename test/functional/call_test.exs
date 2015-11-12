@@ -16,13 +16,12 @@ defmodule ExRPC.Test.Functional.Call do
   end
 
   test "Call on local node mf" do
-    assert ExRPC.Test.Helper.master = ExRPC.call(master, :erlang, :node, [])
+    assert ExRPC.Test.Helper.master = ExRPC.call(master, :erlang, :node)
   end
 
   test "Call on local node mfa" do
     assert [3,2,1] = ExRPC.call(master, :erlang, :apply, [Enum, :reverse, [[1, 2, 3]]])
   end
-
 
   test "Call on invalid node" do
     assert {:badrpc, :nodedown} = ExRPC.call(invalid, :os, :timestamp, [])

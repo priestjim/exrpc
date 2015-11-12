@@ -9,7 +9,6 @@ defmodule ExRPC.Test.Moduledoc do
     :ok
   end
 
-
   doctest ExRPC
 
 end

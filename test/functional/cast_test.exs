@@ -15,6 +15,18 @@ defmodule ExRPC.Test.Functional.Cast do
     assert true = ExRPC.cast(slave, :os, :timestamp, [])
   end
 
+  test "Cast on local node mf" do
+    assert true= ExRPC.cast(master, :erlang, :node)
+  end
+
+  test "Cast on local node mfa" do
+    assert true = ExRPC.cast(master, Kernel, :send, [self, {:test, 'wawasing'}])
+    receive do
+        {:test, _} -> true
+        msg ->  :erlang.error RuntimeError.exception(msg) 
+    end
+  end
+
   test "Cast with invalid function" do
     assert true = ExRPC.cast(slave, :os, :timestamp_undef, [])
   end
