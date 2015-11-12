@@ -36,6 +36,7 @@ endif
 # =============================================================================
 ERL = $(shell which erl 2> /dev/null)
 ELIXIR = $(shell which elixir 2> /dev/null)
+MIX = $(shell which mix 2> /dev/null)
 IEX = $(shell which iex 2> /dev/null)
 DIALYXIR = $(shell mix help 2> /dev/null | grep dialyzer.plt)
 DIALYXIR_URL = https://github.com/jeremyjh/dialyxir.git
@@ -52,6 +53,9 @@ ifeq ($(IEX),)
 	$(error "IEx is not available on this system")
 endif
 
+ifeq ($(IEX),)
+	$(error "IEx is not available on this system")
+endif
 # Dialyzer
 ERLANG_VERSION := $(shell $(ERL) -eval 'io:format("~s~n", [erlang:system_info(otp_release)]), halt().' -noshell)
 ELIXIR_VERSION := $(shell $(ELIXIR) -v | cut -d\  -f2 | sed -e 's/-dev//')
@@ -65,6 +69,7 @@ all:
 	@MIX_ENV=dev $(ELIXIR) -S mix c
 
 test: epmd all
+	@yes | $(MIX) local.rebar && yes | $(MIX) local.hex 
 	@MIX_ENV=test $(ELIXIR) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix t
 
 dialyzer: _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt all
