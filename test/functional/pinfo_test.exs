@@ -22,7 +22,7 @@ defmodule ExRPC.Test.Functional.Pinfo do
     pid = ExRPC.call(master, Kernel, :spawn, [fn -> Process.exit(self, :normal) end])
     assert false == ExRPC.call(master, Process, :alive?, [pid])
     assert [] = ExRPC.pinfo(master, pid)
-    assert nil = ExRPC.pinfo(master, pid, :status)
+    assert nil == ExRPC.pinfo(master, pid, :status)
   end
 
   test "Pinfo status on living process on local node" do
