@@ -21,7 +21,7 @@ defmodule ExRPC.Test.Functional.Pinfo do
   test "Pinfo on dead process on local node" do
     pid = ExRPC.call(master, Kernel, :spawn, [fn -> Process.exit(self, :normal) end])
     assert false == ExRPC.call(master, Process, :alive?, [pid])
-    assert :undefined = ExRPC.pinfo(master, pid)
+    assert nil = ExRPC.pinfo(master, pid)
   end
 
   test "Pinfo status on living process on local node" do
@@ -39,7 +39,7 @@ defmodule ExRPC.Test.Functional.Pinfo do
   test "Pinfo on dead process on slave node" do
     pid = ExRPC.call(slave, Kernel, :spawn, [fn -> Process.exit(self, :normal) end])
     assert false == ExRPC.call(slave, Process, :alive?, [pid])
-    assert :undefined = ExRPC.pinfo(slave, pid)
+    assert nil = ExRPC.pinfo(slave, pid)
   end
 
   test "Pinfo on process that throws on slave node" do
