@@ -26,7 +26,7 @@ defmodule ExRPC.Test.Functional.Pinfo do
   test "Pinfo status on living process on local node" do
     pid = ExRPC.call(master, Kernel, :spawn, [fn -> :timer.sleep(100000) end])
     assert true = ExRPC.call(master, Process, :alive?, [pid])
-    assert {:status,:waiting}!= ExRPC.pinfo(master, pid, [:status])
+    assert {:status,:waiting}!= ExRPC.pinfo(master, pid, :status)
   end
 
   test "Pinfo on living process on slave node" do
@@ -50,6 +50,6 @@ defmodule ExRPC.Test.Functional.Pinfo do
   test "Pinfo status on living process on slave node" do
     pid = ExRPC.call(slave, Kernel, :spawn, [fn -> :timer.sleep(100000) end])
     assert true = ExRPC.call(slave, Process, :alive?, [pid])
-    assert {:status,:waiting}!= ExRPC.pinfo(slave, pid, [:status])
+    assert {:status,:waiting}!= ExRPC.pinfo(slave, pid, :status)
   end
 end
