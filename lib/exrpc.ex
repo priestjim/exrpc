@@ -102,7 +102,7 @@ defmodule ExRPC do
     ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end
 
-  @spec pinfo(node, pid, a | nil) :: {:badtcp | :badrpc, any} | list
+  @spec pinfo(node, pid, atom) :: {:badtcp | :badrpc, any} | list
   def pinfo(node, pid, a \\ nil)
   when is_atom(node) and is_atom(a)
   do
