@@ -106,10 +106,10 @@ defmodule ExRPC do
   def pinfo(node, pid, a \\ nil)
   when is_atom(node) and is_pid(pid) and is_atom(a)
   do
-    cond a
+    case a do
         nil -> ExRPC.Client.call(node, Process, :info, [pid, []])
         _ -> ExRPC.Client.call(node, Process, :info, [pid, a])
     end 
- end
+  end
 
 end
