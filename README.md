@@ -1,5 +1,8 @@
 [![Build Status](https://travis-ci.org/priestjim/exrpc.svg)](https://travis-ci.org/priestjim/exrpc)
 
++master: [![Coverage Status](https://coveralls.io/repos/priestjim/exrpc/badge.svg?branch=master&service=github)](https://coveralls.io/github/priestjim/exrpc?branch=master)
++develop: [![Coverage Status](https://coveralls.io/repos/priestjim/exrpc/badge.svg?branch=develop&service=github)](https://coveralls.io/github/priestjim/exrpc?branch=develop)
+
 # ExRPC
 
 `ExRPC` is an out-of band messaging library that uses TCP ports to
