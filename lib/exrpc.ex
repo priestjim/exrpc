@@ -43,11 +43,11 @@ defmodule ExRPC do
       iex> ExRPC.safe_cast(:'random_node@127.0.0.1', :os, :timestamp)
       {:badrpc, :nodedown}
 
-      iex> pid = ExRPC.call(master, Kernel, :spawn, [fn -> :timer.sleep(100000) end])
-      iex> {:status,:waiting} == ExRPC.pinfo(master, pid, :status)
+      iex'...>' pid = ExRPC.call(master, Kernel, :spawn, [fn -> :timer.sleep(100000) end])
+                {:status,:waiting} == ExRPC.pinfo(master, pid, :status)
 
-      iex> pid = ExRPC.call(master, Kernel, :spawn, [fn -> Process.exit(self, :normal) end])
-      iex> nil == ExRPC.pinfo(master, pid, :status)
+      iex'...>' pid = ExRPC.call(master, Kernel, :spawn, [fn -> Process.exit(self, :normal) end])
+                nil == ExRPC.pinfo(master, pid, :status)
 
     ExRPC will try to detect possible issues with the TCP channel on which
     it operates, both by closely monitoring `gen_tcp` timeouts and by testing
