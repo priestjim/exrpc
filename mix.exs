@@ -99,7 +99,7 @@ defmodule ExRPC.Mixfile do
     ]
   end
 
-  defp aliases d
+  defp aliases do
     [
       test: [&start_epmd/1, "test"],
       c: "compile",
@@ -122,3 +122,6 @@ defmodule ExRPC.Mixfile do
     Mix.Shell.IO.info("Starting distributed Elixir")
     {"", 0} = System.cmd("epmd", ["-daemon"])
   end
+
+end
+
