@@ -104,7 +104,7 @@ defmodule ExRPC do
 
   @spec pinfo(node, pid, a | nil) :: {:badtcp | :badrpc, any} | list
   def pinfo(node, pid, a \\ nil)
-  when is_atom(node) and is_list(a)
+  when is_atom(node) and is_atom(a)
   do
     ExRPC.Client.call(node, Process, :info, [pid, a])
   end
