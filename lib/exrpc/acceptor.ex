@@ -99,7 +99,7 @@ defmodule ExRPC.Acceptor do
           :ok = ExRPC.Helper.activate_socket(socket)
           {:next_state, :waiting_for_data, state_rec, ttl}
         {^node, {:cast, m, f, a}} ->
-          {:ok, _worker_pid} = Task.Supervisor.start_child(ExRPC.Supervisor.ServerWorker, m, f, a)
+          {:ok, _worker_pid} = Task.Supervisor.start_child(ExRPC.Supervisor.ServerWorker, __MODULE__, :cast_worker, [m, f, a])
           :ok = ExRPC.Helper.activate_socket(socket)
           {:next_state, :waiting_for_data, state_rec, ttl}
         _other_data ->
@@ -155,9 +155,9 @@ defmodule ExRPC.Acceptor do
   @doc """
     Stub callbacks for behaviour
   """
-  def handle_info({node_event, _node, _info_list}, _state_name, state(inactivity_timeout: ttl) = state_rec)
+  def handle_info({node_event, _node, _info_list}, state_name, state(inactivity_timeout: ttl) = state_rec)
   when node_event in [:nodeup, :nodedown] do
-    {:noreply, state_rec, ttl}
+    {:next_state, state_name, state_rec, ttl}
   end
 
   @doc """
@@ -193,6 +193,19 @@ defmodule ExRPC.Acceptor do
     end
     packet_bin = :erlang.term_to_binary({client_pid, ref, result})
     send(caller, {:call_reply, packet_bin})
+  end
+
+  @doc """
+    This is the function/process that the task supervisor will
+    launch to run the RPC cast from a remote node.
+  """
+  @spec cast_worker(module, function, list) :: any
+  def cast_worker(m, f, a) do
+    try do
+      Kernel.apply(m, f, a)
+    catch
+      _error, _reason -> :ok
+    end
   end
 
 end

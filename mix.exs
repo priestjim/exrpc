@@ -18,7 +18,7 @@ defmodule ExRPC.Mixfile do
       start_permanent: Mix.env == :prod,
       language: :elixir,
       elixir: "~> 1.1",
-      deps: [],
+      deps: deps,
       aliases: aliases,
       package: package,
       source_url: "https://github.com/priestjim/exrpc",
@@ -54,7 +54,8 @@ defmodule ExRPC.Mixfile do
           "-Werror_handling",
           "-Wrace_conditions"
         ]
-      ]
+      ],
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -91,6 +92,13 @@ defmodule ExRPC.Mixfile do
     ]
   end
 
+  defp deps do
+    [
+     # Test dependencies
+     {:excoveralls, "~> 0.3", only: :test}
+    ]
+  end
+
   defp aliases do
     [
       test: [&start_epmd/1, "test"],
@@ -116,3 +124,5 @@ defmodule ExRPC.Mixfile do
   end
 
 end
+
+

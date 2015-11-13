@@ -5,6 +5,7 @@
 ## Enable kernel poll and a few async threads
 +K true
 +A 4
++a 8192
 
 ## Enable unicode
 +pc unicode
