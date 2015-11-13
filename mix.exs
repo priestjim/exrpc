@@ -95,10 +95,11 @@ defmodule ExRPC.Mixfile do
   defp deps do
     [
      # Test dependencies
-     {:excoveralls, "~> 0.3", only: :test},
+     {:excoveralls, "~> 0.3", only: :test}
+    ]
   end
 
-  defp aliases do
+  defp aliases d
     [
       test: [&start_epmd/1, "test"],
       c: "compile",
