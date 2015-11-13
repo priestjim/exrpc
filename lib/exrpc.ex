@@ -102,4 +102,51 @@ defmodule ExRPC do
     ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end
 
+  @doc """
+    Performs an ExRPC `async_call`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
+    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
+    return an error if the connection to the remote node fails (hence the `safe` prefix).
+  """
+  @spec async_call(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def async_call(node, m, f, a \\ [], send_to \\ nil)
+  when is_atom(node) and is_atom(m) and
+       is_atom(f) and is_list(a) and
+       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+  do
+    ExRPC.Client.async_call(node, m, f, a, send_to)
+  end
+
+  @doc """
+    Performs an ExRPC `yield`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
+    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
+    return an error if the connection to the remote node fails (hence the `safe` prefix).
+  """
+  @spec yield(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def yield(node, m, f, a \\ [], send_to \\ nil)
+  when is_atom(node) and is_atom(m) and
+       is_atom(f) and is_list(a) and
+       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+  do
+    ExRPC.Client.yield(node, m, f, a, send_to)
+  end
+
+  @doc """
+    Performs an ExRPC `nb_yield`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
+    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
+    return an error if the connection to the remote node fails (hence the `safe` prefix).
+  """
+  @spec nb_yield(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def nb_yield(node, m, f, a \\ [], send_to \\ nil)
+  when is_atom(node) and is_atom(m) and
+       is_atom(f) and is_list(a) and
+       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+  do
+    ExRPC.Client.nb_yield(node, m, f, a, send_to)
+  end
+
+
+
 end
