@@ -4,7 +4,6 @@ defmodule ExRPC.Test.Functional.Pinfo do
   import ExRPC.Test.Helper
 
   setup_all do
-    ExRPC.Test.Helper.start_master_node()
     ExRPC.Test.Helper.start_slave_node()
     on_exit fn() ->
       ExRPC.Test.Helper.stop_slave_node()

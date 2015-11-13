@@ -38,7 +38,7 @@ ERL = $(shell which erl 2> /dev/null)
 ELIXIR = $(shell which elixir 2> /dev/null)
 MIX = $(shell which mix 2> /dev/null)
 IEX = $(shell which iex 2> /dev/null)
-DIALYXIR = $(shell mix help 2> /dev/null | grep dialyzer.plt)
+DIALYXIR = $(shell $(MIX) help 2> /dev/null | grep dialyzer.plt)
 DIALYXIR_URL = https://github.com/jeremyjh/dialyxir.git
 
 ifeq ($(ERL),)
@@ -67,48 +67,48 @@ PLT_FILE := _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt
 
 all:
 	@MIX_ENV=dev $(MIX) deps.get && $(MIX) local.hex --force 
-	@MIX_ENV=dev $(ELIXIR) -S mix c
+	@MIX_ENV=dev $(ELIXIR) -S $(MIX) c
 
 test: epmd all
 	@MIX_ENV=test $(MIX) deps.get && $(MIX) local.hex --force 
-	@MIX_ENV=test $(ELIXIR) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix t
+	@MIX_ENV=test $(ELIXIR) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S $(MIX) t --trace --cover
 
 dialyzer: _plt/otp-$(ERLANG_VERSION)_elixir-$(ELIXIR_VERSION).plt all
-	@MIX_ENV=dev $(ELIXIR) -S mix d | fgrep -v -f $(CURDIR)/dialyzer.ignore
+	@MIX_ENV=dev $(ELIXIR) -S $(MIX) d | fgrep -v -f $(CURDIR)/dialyzer.ignore
 
 $(PLT_FILE):
 ifeq ($(DIALYXIR),)
 	@echo "Dialyxir not found. Installing from source"
 	@git clone $(DIALYXIR_URL) dialyxir && \
 	  cd dialyxir && \
-	  mix archive.build && \
-	  mix archive.install --force && \
+	  $(MIX) archive.build && \
+	  $(MIX) archive.install --force && \
 	  rm -fr dialyxir
 endif
 	@mkdir -p _plt
-	@MIX_ENV=dev $(ELIXIR) -S mix dialyzer.plt
+	@MIX_ENV=dev $(ELIXIR) -S $(MIX) dialyzer.plt
 
 # =============================================================================
 # Run targets
 # =============================================================================
 
 shell: epmd
-	@MIX_ENV=dev $(IEX) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix
+	@MIX_ENV=dev $(IEX) --name exrpc@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S $(MIX)
 
 shell-slave: epmd
-	@MIX_ENV=dev $(IEX) --name exrpc_slave@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S mix
+	@MIX_ENV=dev $(IEX) --name exrpc_slave@127.0.0.1 --cookie exrpc --erl "-args_file config/vm.args" -S $(MIX)
 
 # =============================================================================
 # Misc targets
 # =============================================================================
 
 clean:
-	@$(ELIXIR) -S mix clean --deps
+	@$(ELIXIR) -S $(MIX) clean --deps
 
 distclean:
 	@rm -rf _build _plt .rebar Mnesia* mnesia* log/ data/ temp-data/ rebar.lock
 	@find . -name erl_crash.dump -type f -delete
-	@$(ELIXIR) -S mix clean --deps
+	@$(ELIXIR) -S $(MIX) clean --deps
 
 epmd:
 	@pgrep epmd 2> /dev/null > /dev/null || epmd -daemon || true
