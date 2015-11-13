@@ -145,7 +145,7 @@ defmodule ExRPC.Client do
     # Perform an in-band RPC call to the remote node
     # asking it to launch a listener for us and return us
     # the port that has been allocated for us
-    case :rpc.call(server_node, ExRPC.Supervisor.Server, :start_child, [node()], conn_to) do
+    case :rpc.call(server_node, :'Elixir.ExRPC.Supervisor.Server', :start_child, [node()], conn_to) do
       {:ok, port} ->
         # Fetching the IP ourselves, since the remote node
         # does not have a straightforward way of returning
@@ -287,7 +287,6 @@ defmodule ExRPC.Client do
     after
       timeout ->
         _ = GenServer.reply(caller, {:badrpc, :timeout})
-        exit({:error, :timeout})
     end
   end
 

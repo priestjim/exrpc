@@ -5,15 +5,27 @@ elixir:
 otp_release:
   - 18.1
   - 18.0
+  - 17.5
+  - 17.4
+
 install: "true"
 branches:
   only:
     - master
-script: "make test dialyzer"
+    - develop
+
+before_script:
+  - mix local.hex --force
+  - mix deps.get --only test
+
+script: "make test"
+
+after_success:
+  - mix do compile, coveralls.travis
 cache:
   directories:
   - _plt
+  - $HOME/.mix/archives
 notifications:
   email:
     - priestjim@gmail.com
-

@@ -1,11 +1,5 @@
-defmodule ExRPC.Test do
+defmodule ExRPC.Test.Supervisor do
   use ExUnit.Case
-
-  doctest ExRPC
-
-  test "Proper application startup" do
-    assert({:ok, _apps} = Application.ensure_all_started(:exrpc))
-  end
 
   test "Supervisor startup" do
     assert(is_pid(Process.whereis(ExRPC.Supervisor.Application)) === true)

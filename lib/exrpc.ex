@@ -13,19 +13,34 @@ defmodule ExRPC do
     effectively spreading the load to X processes for X nodes, instead of pushing data
     from every remote node/RPC call into a single `rex` server.
 
+    The first step is start the target server. Example below assumes node name is 
+    exrpc_@127.0.0.1 and path to your beam per standard rebar3 location.
+
     You can generally use `ExRPC.call` and `ExRPC.cast` the same way you use
     the `RPC` library, in the following manner:
 
-      iex> ExRPC.call(node, :erlang, :is_atom, [:ok], 1000)
+      iex> ExRPC.call(:'exrpc_slave@127.0.0.1', :erlang, :is_atom, [:ok], 1000)
       true
 
-      iex> ExRPC.cast(node, :os, :timestamp)
+      iex> ExRPC.call(:'exrpc_slave@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
       true
 
-      iex> ExRPC.safe_cast(node, :os, :timestamp)
+      iex> ExRPC.cast(:'exrpc_slave@127.0.0.1', :os, :timestamp)
+      true
+
+      iex> ExRPC.cast(:'exrpc_slave@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
+      true
+
+      iex> ExRPC.safe_cast(:'exrpc_slave@127.0.0.1', :os, :timestamp)
+      true
+
+      iex> ExRPC.safe_cast(:'exrpc_slave@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
       true
 
       iex> ExRPC.safe_cast(:'random_node@127.0.0.1', :os, :timestamp)
+      {:badrpc, :nodedown}
+
+      iex> ExRPC.call(:'random_node@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
       {:badrpc, :nodedown}
 
     ExRPC will try to detect possible issues with the TCP channel on which
