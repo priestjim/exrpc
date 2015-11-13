@@ -9,7 +9,7 @@ defmodule ExRPC.Test.Helper do
   defmacro invalid do :'exrpc_invalid@127.0.0.1' end
 
   def start_master_node() do
-    case :net_kernel.start([{:longnames, true}, master]) do
+    case Node.start(master, :longnames) do
       {:ok, _} ->
         {:ok, {master, :started}};
       {:error,{:already_started, _pid}} ->
