@@ -25,6 +25,9 @@ defmodule ExRPC do
       iex> ExRPC.call(:'exrpc_slave@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
       true
 
+      iex> ExRPC.call(:'random_node@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
+      {:badrpc, :nodedown}
+
       iex> ExRPC.cast(:'exrpc_slave@127.0.0.1', :os, :timestamp)
       true
 
@@ -38,9 +41,6 @@ defmodule ExRPC do
       true
 
       iex> ExRPC.safe_cast(:'random_node@127.0.0.1', :os, :timestamp)
-      {:badrpc, :nodedown}
-
-      iex> ExRPC.call(:'random_node@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
       {:badrpc, :nodedown}
 
     ExRPC will try to detect possible issues with the TCP channel on which
