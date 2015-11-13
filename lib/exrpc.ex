@@ -43,6 +43,12 @@ defmodule ExRPC do
       iex> ExRPC.safe_cast(:'random_node@127.0.0.1', :os, :timestamp)
       {:badrpc, :nodedown}
 
+      iex> pid = ExRPC.call(master, Kernel, :spawn, [fn -> :timer.sleep(100000) end])
+      iex> {:status,:waiting} == ExRPC.pinfo(master, pid, :status)
+
+      iex> pid = ExRPC.call(master, Kernel, :spawn, [fn -> Process.exit(self, :normal) end])
+      iex> nil == ExRPC.pinfo(master, pid, :status)
+
     ExRPC will try to detect possible issues with the TCP channel on which
     it operates, both by closely monitoring `gen_tcp` timeouts and by testing
     connectivity through the Erlang VM for `every single request`, thus ensuring
@@ -90,7 +96,7 @@ defmodule ExRPC do
   @doc """
     Performs an ExRPC `safe_cast`, by automatically connecting to a remote `node` and
     sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
-    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
+    (an asynchronous cast). In contrast to the simple `cast` function, this function will
     return an error if the connection to the remote node fails (hence the `safe` prefix).
   """
   @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
@@ -102,6 +108,12 @@ defmodule ExRPC do
     ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end
 
+  @doc """
+    Performs an ExRPC `pinfo`, by automatically connecting to a remote `node` and
+    sending a Process.info, requires the target pid. 
+    This function will nil if process is not found or a list containing
+    process info, which is identical to Process.info behaviour but on a node through exrpc.
+  """
   @spec pinfo(node, pid, atom) :: {:badtcp | :badrpc, any} | list
   def pinfo(node, pid, a \\ nil)
   when is_atom(node) and is_pid(pid) and is_atom(a)
