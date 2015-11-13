@@ -102,11 +102,11 @@ defmodule ExRPC do
     ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end
 
-  @spec pinfo(node, list) :: {:badtcp | :badrpc, any} | list
-  def pinfo(node, a \\ [])
+  @spec pinfo(node, pid, a | nil) :: {:badtcp | :badrpc, any} | list
+  def pinfo(node, pid, a \\ nil)
   when is_atom(node) and is_list(a)
   do
-    ExRPC.Client.call(node, Process, :info, a)
+    ExRPC.Client.call(node, Process, :info, [pid, a])
   end
 
 end
