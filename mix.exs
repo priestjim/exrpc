@@ -122,5 +122,3 @@ defmodule ExRPC.Mixfile do
     Mix.Shell.IO.info("Starting distributed Elixir")
     {"", 0} = System.cmd("epmd", ["-daemon"])
   end
-
-end
