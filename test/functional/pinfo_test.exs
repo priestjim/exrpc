@@ -39,7 +39,8 @@ defmodule ExRPC.Test.Functional.Pinfo do
 
   test "Pinfo on dead process on slave node" do
     pid = ExRPC.call(slave, Kernel, :spawn, [fn -> Process.exit(self, :normal) end])
-    :timer.sleep(1000)
+    # A bit concerning. Erlang never need to wait this long for remote pid status
+    :timer.sleep(1000) 
     assert false == ExRPC.call(slave, Process, :alive?, [pid])
     assert [] == ExRPC.pinfo(slave, pid)
     assert nil == ExRPC.pinfo(slave, pid, :status)
