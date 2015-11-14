@@ -43,6 +43,20 @@ defmodule ExRPC do
       iex> ExRPC.safe_cast(:'random_node@127.0.0.1', :os, :timestamp)
       {:badrpc, :nodedown}
 
+      Direct rip out from elixir Task.ex doc:
+      Note that, when working with distributed tasks, one should use the `async/4` function
+      that expects explicit module, function and arguments, instead of `async/2` that
+      works with anonymous functions. That's because anonymous functions expect
+      the same module version to exist on all involved nodes. Check the `Agent` module
+      documentation for more information on distributed processes as the limitations
+      described in the agents documentation apply to the whole ecosystem.
+
+      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> Task.await()
+      "hello\n"
+
+      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> Task.await()
+      "hello\n"
+
     ExRPC will try to detect possible issues with the TCP channel on which
     it operates, both by closely monitoring `gen_tcp` timeouts and by testing
     connectivity through the Erlang VM for `every single request`, thus ensuring
@@ -103,18 +117,18 @@ defmodule ExRPC do
   end
 
   @doc """
-    Performs an ExRPC `async_call`, by automatically connecting to a remote `node` and
+    Performs an ExRPC `async`, by automatically connecting to a remote `node` and
     sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
     (an asynchronous cast). In contrast to the simple `cast` functin, this function will
     return an error if the connection to the remote node fails (hence the `safe` prefix).
   """
-  @spec async_call(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
-  def async_call(node, m, f, a \\ [], send_to \\ nil)
+  @spec async(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def async(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
        (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
   do
-    ExRPC.Client.async_call(node, m, f, a, send_to)
+    ExRPC.Client.async(node, m, f, a, send_to)
   end
 
   @doc """
@@ -133,20 +147,17 @@ defmodule ExRPC do
   end
 
   @doc """
-    Performs an ExRPC `nb_yield`, by automatically connecting to a remote `node` and
+    Performs an ExRPC `await`, by automatically connecting to a remote `node` and
     sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
     (an asynchronous cast). In contrast to the simple `cast` functin, this function will
     return an error if the connection to the remote node fails (hence the `safe` prefix).
   """
-  @spec nb_yield(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
-  def nb_yield(node, m, f, a \\ [], send_to \\ nil)
+  @spec await(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def await(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
        (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
   do
-    ExRPC.Client.nb_yield(node, m, f, a, send_to)
+    ExRPC.Client.await(node, m, f, a, send_to)
   end
-
-
-
 end
