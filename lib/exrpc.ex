@@ -54,7 +54,7 @@ defmodule ExRPC do
       iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.await()
       "hello\n"
 
-      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.await()
+      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.yield(5000)
       "hello\n"
 
     ExRPC will try to detect possible issues with the TCP channel on which
@@ -127,23 +127,19 @@ defmodule ExRPC do
 
   @doc """
     Performs an ExRPC `async`, by automatically connecting to a remote `node` and
-    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
-    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
-    return an error if the connection to the remote node fails (hence the `safe` prefix).
+    sending a "protected" {`m`,`f`,`a`} call that will be executed without the caller waiting.
+     A 'reference' is returned containing the information to ask for the execution result.
   """
-  @spec async(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
-  def async(node, m, f, a \\ [], send_to \\ nil)
+  @spec async(node, module, function, list | nil) :: {:badtcp | :badrpc, any} | true
+  def async(node, m, f, a \\ [])
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a)
   do
-    ExRPC.Client.async(node, m, f, a, send_to)
+    ExRPC.Client.async(node, m, f, a)
   end
 
   @doc """
-    Performs an ExRPC `yield`, by automatically connecting to a remote `node` and
-    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
-    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
-    return an error if the connection to the remote node fails (hence the `safe` prefix).
+    Performs an ExRPC `yield`.  Awaits a task reply.
   """
   @spec yield(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def yield(node, m, f, a \\ [], send_to \\ nil)
@@ -155,10 +151,7 @@ defmodule ExRPC do
   end
 
   @doc """
-    Performs an ExRPC `await`, by automatically connecting to a remote `node` and
-    sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
-    (an asynchronous cast). In contrast to the simple `cast` functin, this function will
-    return an error if the connection to the remote node fails (hence the `safe` prefix).
+    Performs an ExRPC `await`. Awaits a task reply.
   """
   @spec await(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def await(node, m, f, a \\ [], send_to \\ nil)
