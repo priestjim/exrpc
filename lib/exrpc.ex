@@ -51,10 +51,10 @@ defmodule ExRPC do
       documentation for more information on distributed processes as the limitations
       described in the agents documentation apply to the whole ecosystem.
 
-      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> Task.await()
+      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.await()
       "hello\n"
 
-      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> Task.await()
+      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.await()
       "hello\n"
 
     ExRPC will try to detect possible issues with the TCP channel on which
