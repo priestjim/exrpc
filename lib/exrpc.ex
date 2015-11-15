@@ -64,6 +64,15 @@ defmodule ExRPC do
   """
 
   # ===================================================
+  # Private Macro
+  # ===================================================
+  defmacro is_proper_timeout(timeout) do
+     quote do
+        is_nil(unquote(timeout)) or (is_integer(unquote(timeout)) and unquote(timeout) >= 0 ) or unquote(timeout) === :infinity
+     end
+  end
+
+  # ===================================================
   # Public API
   # ===================================================
 
@@ -81,8 +90,8 @@ defmodule ExRPC do
   def call(node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(recv_to) or is_integer(recv_to) or recv_to === :infinity) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(recv_to) and
+       is_proper_timeout(send_to)
   do
     ExRPC.Client.call(node, m, f, a, recv_to, send_to)
   end
@@ -96,7 +105,7 @@ defmodule ExRPC do
   def cast(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     ExRPC.Client.cast(node, m, f, a, send_to)
   end
@@ -111,7 +120,7 @@ defmodule ExRPC do
   def safe_cast(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end
@@ -125,8 +134,7 @@ defmodule ExRPC do
   @spec async(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def async(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_atom(f) and is_list(a)
   do
     ExRPC.Client.async(node, m, f, a, send_to)
   end
@@ -141,7 +149,7 @@ defmodule ExRPC do
   def yield(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     ExRPC.Client.yield(node, m, f, a, send_to)
   end
@@ -156,7 +164,7 @@ defmodule ExRPC do
   def await(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     ExRPC.Client.await(node, m, f, a, send_to)
   end
