@@ -25,6 +25,23 @@ defmodule ExRPC.Client do
     inactivity_timeout: :infinity
 
   # ===================================================
+  # User defined guard Macro
+  # ===================================================
+  defmacro is_proper_timeout(timeout_ast) do
+     quote do
+        is_nil(unquote(timeout_ast)) or 
+        (is_integer(unquote(timeout_ast)) and unquote(timeout_ast) >= 0 ) or
+        unquote(timeout_ast) === :infinity
+     end
+  end
+
+  defmacro is_key(key_ast) do
+     quote do
+        is_pid(unquote(key_ast)) or is_reference(unquote(key_ast)) 
+     end
+  end
+
+  # ===================================================
   # Public API
   # ===================================================
 
@@ -121,6 +138,50 @@ defmodule ExRPC.Client do
       pid ->
         GenServer.call(pid, {{:cast,m,f,a}, send_to}, :infinity)
     end
+  end
+
+  @doc """
+    Performs an ExRPC `async`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will be executed without the caller waiting.
+     A 'reference' is returned containing the information to ask for the execution result.
+  """
+  @spec async(node, module, function, list) :: true
+  def async(server_node, m, f, a \\ [])
+  when is_atom(server_node) and is_atom(m) and
+       is_atom(f) and is_list(a)
+  do
+    Task.async(fn -> call(server_node, m, f, a) end)
+  end
+
+  @spec yield(task :: %Task{pid: term, ref: term}, timeout | nil) :: true
+  def yield(task, timeout \\ nil)
+  when is_proper_timeout(timeout)
+  do
+    case Task.yield(task, timeout) do
+      {:ok, reply} -> {reply}
+      {:exit, reason} -> {:badrpc, reason}
+      {:badrpc, reason} ->  {:badrpc, reason}
+      {:badtcp, reason} ->  {:badtcp, reason} 
+      unknown ->  {:badrpc, unknown} 
+    end 
+  end
+
+
+  @spec await(task :: %Task{pid: term, ref: term}, timeout | nil) :: true
+  def await(task, timeout \\ nil)
+  when is_proper_timeout(timeout) 
+  do
+    # Extract settings to store in state
+    settings = Application.get_all_env(:exrpc)
+    recv_to = Keyword.get(settings, :receive_timeout)
+    {recv_to, _} = merge_timeout_values(recv_to, timeout, nil, nil)
+    case Task.await(task, recv_to) do
+      {:ok, reply} -> {reply}
+      {:exit, reason} -> {:badrpc, reason}
+      {:badrpc, reason} ->  {:badrpc, reason}
+      {:badtcp, reason} ->  {:badtcp, reason} 
+      unknown ->  {:badrpc, unknown} 
+    end   
   end
 
   # ===================================================

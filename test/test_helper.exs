@@ -40,6 +40,21 @@ defmodule ExRPC.Test.Helper do
     :ok = :slave.stop(node_name)
   end
 
+  def spawn_long_running(time_span) do
+    :proc_lib.spawn_link(:timer, :sleep, [time_span])
+  end
+
+  def spawn_short_running() do
+    :proc_lib.spawn_link(:erlang,:exit, [:normal])
+  end
+
+  # 
+  def wait_and_send(caller, message) do
+    send caller, :ready
+    receive do: (true -> true)
+    send caller, message
+  end
+
 end
 
 ExUnit.start()

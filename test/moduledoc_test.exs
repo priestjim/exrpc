@@ -1,5 +1,5 @@
 defmodule ExRPC.Test.Moduledoc do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   setup_all do
     {:ok, _} = ExRPC.Test.Helper.start_slave_node()

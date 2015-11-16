@@ -64,11 +64,17 @@ defmodule ExRPC do
   """
 
   # ===================================================
-  # Private Macro
+  # User defined guard Macro
   # ===================================================
-  defmacro is_proper_timeout(timeout) do
+  defmacro is_proper_timeout(timeout_ast) do
      quote do
-        is_nil(unquote(timeout)) or (is_integer(unquote(timeout)) and unquote(timeout) >= 0 ) or unquote(timeout) === :infinity
+        is_nil(unquote(timeout_ast)) or (is_integer(unquote(timeout_ast)) and unquote(timeout_ast) >= 0 ) or unquote(timeout_ast) === :infinity
+     end
+  end
+
+  defmacro is_key(key_ast) do
+     quote do
+        is_pid(unquote(key_ast)) or is_reference(unquote(key_ast)) 
      end
   end
 
@@ -128,37 +134,32 @@ defmodule ExRPC do
   @doc """
     Performs an ExRPC `async`, by automatically connecting to a remote `node` and
     sending a "protected" {`m`,`f`,`a`} call that will be executed without the caller waiting.
-     A 'reference' is returned containing the information to ask for the execution result.
+     A 'reference key' is returned containing the information to ask for the execution result.
   """
   @spec async(node, module, function, list | nil) :: {:badtcp | :badrpc, any} | true
   def async(node, m, f, a \\ [])
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a)
   do
     ExRPC.Client.async(node, m, f, a)
   end
 
   @doc """
-    Performs an ExRPC `yield`.  Awaits a task reply.
+    Performs an ExRPC `yield`.  Awaits a task reply. It requires a 'reference key'to retrieve 
+    execution result from previous async call. Once the result is returned, the key is obselete
+    and cannot be used again, doing so the behaviour is undefined. 
+
   """
-  @spec yield(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
-  def yield(node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       is_proper_timeout(send_to)
+  @spec yield(task :: %Task{pid: term, ref: term}, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def yield(task, timeout \\ nil)
   do
-    ExRPC.Client.yield(node, m, f, a, send_to)
+    ExRPC.Client.yield(task, timeout)
   end
 
   @doc """
     Performs an ExRPC `await`. Awaits a task reply.
   """
-  @spec await(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
-  def await(node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       is_proper_timeout(send_to)
+  @spec await(task :: %Task{pid: term, ref: term}, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def await(task, timeout \\ nil)
   do
-    ExRPC.Client.await(node, m, f, a, send_to)
+    ExRPC.Client.await(task, timeout)
   end
 end
