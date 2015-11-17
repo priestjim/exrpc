@@ -64,21 +64,6 @@ defmodule ExRPC do
   """
 
   # ===================================================
-  # User defined guard Macro
-  # ===================================================
-  defmacro is_proper_timeout(timeout_ast) do
-     quote do
-        is_nil(unquote(timeout_ast)) or (is_integer(unquote(timeout_ast)) and unquote(timeout_ast) >= 0 ) or unquote(timeout_ast) === :infinity
-     end
-  end
-
-  defmacro is_key(key_ast) do
-     quote do
-        is_pid(unquote(key_ast)) or is_reference(unquote(key_ast)) 
-     end
-  end
-
-  # ===================================================
   # Public API
   # ===================================================
 
@@ -94,10 +79,6 @@ defmodule ExRPC do
   """
   @spec call(node, module, function, list, timeout | nil, timeout | nil) :: {:badtcp | :badrpc, any} | any
   def call(node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       is_proper_timeout(recv_to) and
-       is_proper_timeout(send_to)
   do
     ExRPC.Client.call(node, m, f, a, recv_to, send_to)
   end
@@ -109,9 +90,6 @@ defmodule ExRPC do
   """
   @spec cast(node, module, function, list, timeout | nil) :: true
   def cast(node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       is_proper_timeout(send_to)
   do
     ExRPC.Client.cast(node, m, f, a, send_to)
   end
@@ -124,9 +102,6 @@ defmodule ExRPC do
   """
   @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def safe_cast(node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       is_proper_timeout(send_to)
   do
     ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end

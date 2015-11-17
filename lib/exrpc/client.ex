@@ -62,8 +62,8 @@ defmodule ExRPC.Client do
   def call(server_node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
   when is_atom(server_node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(recv_to) or is_integer(recv_to) or recv_to === :infinity) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(recv_to) and
+       is_proper_timeout(send_to)
   do
     # Naming our gen_server as the node we're calling as it is extremely efficent:
     # We'll never deplete atoms because all connected node names are already atoms in this VM
@@ -90,9 +90,9 @@ defmodule ExRPC.Client do
   """
   @spec cast(node, module, function, list, timeout | nil) :: true
   def cast(server_node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(server_node) and is_atom(m) and
+  when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     case GenServer.whereis(server_node) do
       nil ->
@@ -120,9 +120,9 @@ defmodule ExRPC.Client do
   """
   @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def safe_cast(server_node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(server_node) and is_atom(m) and
+  when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     case GenServer.whereis(server_node) do
       nil ->
