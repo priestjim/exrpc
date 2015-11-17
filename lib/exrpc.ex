@@ -52,7 +52,7 @@ defmodule ExRPC do
       described in the agents documentation apply to the whole ecosystem.
 
       iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.await()
-      "hello\n"
+      {:ok, "hello\n"}
 
       iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.yield(5000)
       "hello\n"
