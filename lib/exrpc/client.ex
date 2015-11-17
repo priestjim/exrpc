@@ -173,7 +173,7 @@ defmodule ExRPC.Client do
     settings = Application.get_all_env(:exrpc)
     recv_to = Keyword.get(settings, :receive_timeout)
     {recv_to, _} = merge_timeout_values(recv_to, timeout, nil, nil)
-    normalize_reply(Task.await(task, recv_to))  
+    normalize_reply(Task.await(task, recv_to))
   end
 
   # ===================================================
@@ -384,12 +384,9 @@ defmodule ExRPC.Client do
   defp normalize_reply(fun)
   do
     case fun do
-      {:ok, reply} -> {reply}
-      {:EXIT, reason} -> {:badrpc, reason}
-      {:exit, reason} -> {:badrpc, reason}
-      {:badrpc, reason} ->  {:badrpc, reason}
-      {:badtcp, reason} ->  {:badtcp, reason} 
-      unknown ->  {:badrpc, unknown} 
+      {:ok, {:badrpc, reason}} -> {:badrpc, reason}
+      {:ok, {:badtcp, reason}} -> {:badtcp, reason}
+      reply ->  reply
     end
   end
 end
