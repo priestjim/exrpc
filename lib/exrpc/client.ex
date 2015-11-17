@@ -157,13 +157,11 @@ defmodule ExRPC.Client do
   def yield(task, timeout \\ nil)
   when is_proper_timeout(timeout)
   do
-    case Task.yield(task, timeout) do
-      {:ok, reply} -> {reply}
-      {:exit, reason} -> {:badrpc, reason}
-      {:badrpc, reason} ->  {:badrpc, reason}
-      {:badtcp, reason} ->  {:badtcp, reason} 
-      unknown ->  {:badrpc, unknown} 
-    end 
+    # Extract settings to store in state
+    settings = Application.get_all_env(:exrpc)
+    recv_to = Keyword.get(settings, :receive_timeout)
+    {recv_to, _} = merge_timeout_values(recv_to, timeout, nil, nil)
+    normalize_reply(Task.yield(task, recv_to))  
   end
 
 
@@ -175,13 +173,7 @@ defmodule ExRPC.Client do
     settings = Application.get_all_env(:exrpc)
     recv_to = Keyword.get(settings, :receive_timeout)
     {recv_to, _} = merge_timeout_values(recv_to, timeout, nil, nil)
-    case Task.await(task, recv_to) do
-      {:ok, reply} -> {reply}
-      {:exit, reason} -> {:badrpc, reason}
-      {:badrpc, reason} ->  {:badrpc, reason}
-      {:badtcp, reason} ->  {:badtcp, reason} 
-      unknown ->  {:badrpc, unknown} 
-    end   
+    normalize_reply(Task.await(task, recv_to))  
   end
 
   # ===================================================
@@ -384,9 +376,21 @@ defmodule ExRPC.Client do
   # Merges user-define timeout values with state timeout values
   @spec merge_timeout_values(timeout | nil, timeout | nil, timeout | nil, timeout | nil) ::
                             {timeout | nil, timeout | nil, timeout | nil, timeout | nil}
-  defp merge_timeout_values(state_recv_to, nil, state_send_to, nil), do: ({state_recv_to, state_send_to})
-  defp merge_timeout_values(_state_recv_to, user_recv_to, state_send_to, nil), do: ({user_recv_to, state_send_to})
-  defp merge_timeout_values(state_recv_to, nil, _state_send_to, user_send_to), do: ({state_recv_to, user_send_to})
-  defp merge_timeout_values(_state_recv_to, user_recv_to, _state_send_to, user_send_to), do: ({user_recv_to, user_send_to})
+  defp merge_timeout_values(state_recv_to, nil, state_send_to, nil) do ({state_recv_to, state_send_to}) end
+  defp merge_timeout_values(_state_recv_to, user_recv_to, state_send_to, nil) do ({user_recv_to, state_send_to}) end
+  defp merge_timeout_values(state_recv_to, nil, _state_send_to, user_send_to) do ({state_recv_to, user_send_to}) end
+  defp merge_timeout_values(_state_recv_to, user_recv_to, _state_send_to, user_send_to) do ({user_recv_to, user_send_to}) end
 
+  defp normalize_reply(fun)
+  do
+    case fun do
+      {:ok, reply} -> {reply}
+      {:EXIT, reason} -> {:badrpc, reason}
+      {:exit, reason} -> {:badrpc, reason}
+      {:badrpc, reason} ->  {:badrpc, reason}
+      {:badtcp, reason} ->  {:badtcp, reason} 
+      unknown ->  {:badrpc, unknown} 
+    end
+  end
 end
+

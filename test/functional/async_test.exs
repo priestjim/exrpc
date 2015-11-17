@@ -70,6 +70,7 @@ defmodule ExRPC.Test.Functional.Async do
 
   test "Await cannot reuse reference" do
     task = ExRPC.async(slave, :erlang, :apply, [fn() -> throw(:throwSlave) end, []])
+
   end
 
   test "Async slave with process exit on remote node" do
