@@ -13,20 +13,49 @@ defmodule ExRPC do
     effectively spreading the load to X processes for X nodes, instead of pushing data
     from every remote node/RPC call into a single `rex` server.
 
+    The first step is start the target server. Example below assumes node name is 
+    exrpc_@127.0.0.1 and path to your beam per standard rebar3 location.
+
     You can generally use `ExRPC.call` and `ExRPC.cast` the same way you use
     the `RPC` library, in the following manner:
 
-      iex> ExRPC.call(node, :erlang, :is_atom, [:ok], 1000)
+      iex> ExRPC.call(:'exrpc_slave@127.0.0.1', :erlang, :is_atom, [:ok], 1000)
       true
 
-      iex> ExRPC.cast(node, :os, :timestamp)
+      iex> ExRPC.call(:'exrpc_slave@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
       true
 
-      iex> ExRPC.safe_cast(node, :os, :timestamp)
+      iex> ExRPC.call(:'random_node@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
+      {:badrpc, :nodedown}
+
+      iex> ExRPC.cast(:'exrpc_slave@127.0.0.1', :os, :timestamp)
+      true
+
+      iex> ExRPC.cast(:'exrpc_slave@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
+      true
+
+      iex> ExRPC.safe_cast(:'exrpc_slave@127.0.0.1', :os, :timestamp)
+      true
+
+      iex> ExRPC.safe_cast(:'exrpc_slave@127.0.0.1', Kernel, :is_atom, [:ok], 1000)
       true
 
       iex> ExRPC.safe_cast(:'random_node@127.0.0.1', :os, :timestamp)
       {:badrpc, :nodedown}
+
+      Direct rip out from elixir Task.ex doc:
+      Note that, when working with distributed tasks, one should use the `async/4` function
+      that expects explicit module, function and arguments, instead of `async/2` that
+      works with anonymous functions. That's because anonymous functions expect
+      the same module version to exist on all involved nodes. Check the `Agent` module
+      documentation for more information on distributed processes as the limitations
+      described in the agents documentation apply to the whole ecosystem.
+
+      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.await()
+      "hello\n"
+
+      iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.yield(5000)
+      {:ok, "hello\n"}
 
     ExRPC will try to detect possible issues with the TCP channel on which
     it operates, both by closely monitoring `gen_tcp` timeouts and by testing
@@ -50,10 +79,6 @@ defmodule ExRPC do
   """
   @spec call(node, module, function, list, timeout | nil, timeout | nil) :: {:badtcp | :badrpc, any} | any
   def call(node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       (is_nil(recv_to) or is_integer(recv_to) or recv_to === :infinity) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
   do
     ExRPC.Client.call(node, m, f, a, recv_to, send_to)
   end
@@ -65,9 +90,6 @@ defmodule ExRPC do
   """
   @spec cast(node, module, function, list, timeout | nil) :: true
   def cast(node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
   do
     ExRPC.Client.cast(node, m, f, a, send_to)
   end
@@ -80,11 +102,39 @@ defmodule ExRPC do
   """
   @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def safe_cast(node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(node) and is_atom(m) and
-       is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
   do
     ExRPC.Client.safe_cast(node, m, f, a, send_to)
   end
 
+  @doc """
+    Performs an ExRPC `async`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will be executed without the caller waiting.
+     A 'reference key' is returned containing the information to ask for the execution result.
+  """
+  @spec async(node, module, function, list | nil) :: {:badtcp | :badrpc, any} | true
+  def async(node, m, f, a \\ [])
+  do
+    ExRPC.Client.async(node, m, f, a)
+  end
+
+  @doc """
+    Performs an ExRPC `yield`.  Awaits a task reply. It requires a 'reference key'to retrieve 
+    execution result from previous async call. Once the result is returned, the key is obselete
+    and cannot be used again, doing so the behaviour is undefined. 
+
+  """
+  @spec yield(task :: %Task{pid: term, ref: term}, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def yield(task, timeout \\ nil)
+  do
+    ExRPC.Client.yield(task, timeout)
+  end
+
+  @doc """
+    Performs an ExRPC `await`. Awaits a task reply.
+  """
+  @spec await(task :: %Task{pid: term, ref: term}, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  def await(task, timeout \\ nil)
+  do
+    ExRPC.Client.await(task, timeout)
+  end
 end

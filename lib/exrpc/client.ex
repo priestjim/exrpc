@@ -25,6 +25,23 @@ defmodule ExRPC.Client do
     inactivity_timeout: :infinity
 
   # ===================================================
+  # User defined guard Macro
+  # ===================================================
+  defmacro is_proper_timeout(timeout_ast) do
+     quote do
+        is_nil(unquote(timeout_ast)) or 
+        (is_integer(unquote(timeout_ast)) and unquote(timeout_ast) >= 0 ) or
+        unquote(timeout_ast) === :infinity
+     end
+  end
+
+  defmacro is_key(key_ast) do
+     quote do
+        is_pid(unquote(key_ast)) or is_reference(unquote(key_ast)) 
+     end
+  end
+
+  # ===================================================
   # Public API
   # ===================================================
 
@@ -45,8 +62,8 @@ defmodule ExRPC.Client do
   def call(server_node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
   when is_atom(server_node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(recv_to) or is_integer(recv_to) or recv_to === :infinity) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(recv_to) and
+       is_proper_timeout(send_to)
   do
     # Naming our gen_server as the node we're calling as it is extremely efficent:
     # We'll never deplete atoms because all connected node names are already atoms in this VM
@@ -73,9 +90,9 @@ defmodule ExRPC.Client do
   """
   @spec cast(node, module, function, list, timeout | nil) :: true
   def cast(server_node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(server_node) and is_atom(m) and
+  when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     case GenServer.whereis(server_node) do
       nil ->
@@ -103,9 +120,9 @@ defmodule ExRPC.Client do
   """
   @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def safe_cast(server_node, m, f, a \\ [], send_to \\ nil)
-  when is_atom(server_node) and is_atom(m) and
+  when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
-       (is_nil(send_to) or is_integer(send_to) or send_to === :infinity)
+       is_proper_timeout(send_to)
   do
     case GenServer.whereis(server_node) do
       nil ->
@@ -121,6 +138,42 @@ defmodule ExRPC.Client do
       pid ->
         GenServer.call(pid, {{:cast,m,f,a}, send_to}, :infinity)
     end
+  end
+
+  @doc """
+    Performs an ExRPC `async`, by automatically connecting to a remote `node` and
+    sending a "protected" {`m`,`f`,`a`} call that will be executed without the caller waiting.
+     A 'reference' is returned containing the information to ask for the execution result.
+  """
+  @spec async(node, module, function, list) :: true
+  def async(server_node, m, f, a \\ [])
+  when is_atom(server_node) and is_atom(m) and
+       is_atom(f) and is_list(a)
+  do
+    Task.async(fn -> call(server_node, m, f, a) end)
+  end
+
+  @spec yield(task :: %Task{pid: term, ref: term}, timeout | nil) :: true
+  def yield(task, timeout \\ nil)
+  when is_proper_timeout(timeout)
+  do
+    # Extract settings to store in state
+    settings = Application.get_all_env(:exrpc)
+    recv_to = Keyword.get(settings, :receive_timeout)
+    {recv_to, _} = merge_timeout_values(recv_to, timeout, nil, nil)
+    normalize_reply(Task.yield(task, recv_to))  
+  end
+
+
+  @spec await(task :: %Task{pid: term, ref: term}, timeout | nil) :: true
+  def await(task, timeout \\ nil)
+  when is_proper_timeout(timeout) 
+  do
+    # Extract settings to store in state
+    settings = Application.get_all_env(:exrpc)
+    recv_to = Keyword.get(settings, :receive_timeout)
+    {recv_to, _} = merge_timeout_values(recv_to, timeout, nil, nil)
+    normalize_reply(Task.await(task, recv_to))
   end
 
   # ===================================================
@@ -323,9 +376,18 @@ defmodule ExRPC.Client do
   # Merges user-define timeout values with state timeout values
   @spec merge_timeout_values(timeout | nil, timeout | nil, timeout | nil, timeout | nil) ::
                             {timeout | nil, timeout | nil, timeout | nil, timeout | nil}
-  defp merge_timeout_values(state_recv_to, nil, state_send_to, nil), do: ({state_recv_to, state_send_to})
-  defp merge_timeout_values(_state_recv_to, user_recv_to, state_send_to, nil), do: ({user_recv_to, state_send_to})
-  defp merge_timeout_values(state_recv_to, nil, _state_send_to, user_send_to), do: ({state_recv_to, user_send_to})
-  defp merge_timeout_values(_state_recv_to, user_recv_to, _state_send_to, user_send_to), do: ({user_recv_to, user_send_to})
+  defp merge_timeout_values(state_recv_to, nil, state_send_to, nil) do ({state_recv_to, state_send_to}) end
+  defp merge_timeout_values(_state_recv_to, user_recv_to, state_send_to, nil) do ({user_recv_to, state_send_to}) end
+  defp merge_timeout_values(state_recv_to, nil, _state_send_to, user_send_to) do ({state_recv_to, user_send_to}) end
+  defp merge_timeout_values(_state_recv_to, user_recv_to, _state_send_to, user_send_to) do ({user_recv_to, user_send_to}) end
 
+  defp normalize_reply(fun)
+  do
+    case fun do
+      {:ok, {:badrpc, reason}} -> {:badrpc, reason}
+      {:ok, {:badtcp, reason}} -> {:badtcp, reason}
+      reply ->  reply
+    end
+  end
 end
+

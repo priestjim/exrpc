@@ -10,6 +10,7 @@ _*
 *.swo
 *.*~
 *~
+*.log
 .erlang.cookie
 .DS_Store
 ebin
