@@ -52,10 +52,10 @@ defmodule ExRPC do
       described in the agents documentation apply to the whole ecosystem.
 
       iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.await()
-      {:ok, "hello\n"}
+      "hello\n"
 
       iex'...>' ExRPC.async(:'exrpc_slave@127.0.0.1', IO, :puts, ["hello"]) |> ExRPC.yield(5000)
-      "hello\n"
+      {:ok, "hello\n"}
 
     ExRPC will try to detect possible issues with the TCP channel on which
     it operates, both by closely monitoring `gen_tcp` timeouts and by testing
