@@ -69,7 +69,7 @@ defmodule ExRPC.Acceptor do
     State that gets triggered when the acceptor process receives ownership of the socket
     and sets up the socket for data operation right after filtering the client's IP address
   """
-  @spec waiting_for_socket({:socket_read, :inet.socket}, record(:state)) ::
+  @spec waiting_for_socket({:socket_ready, :inet.socket}, record(:state)) ::
     {:stop, {:badtcp,:invalid_client_ip}, record(:state)} | {:next_state, :waiting_for_data, record(:state)}
   def waiting_for_socket({:socket_ready, socket}, state(client_ip: client_ip, send_timeout: send_to) = state_rec) do
     # Filter the ports we're willing to accept connections from
