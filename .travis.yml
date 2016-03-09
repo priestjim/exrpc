@@ -13,6 +13,7 @@ cache:
   directories:
   - _plt
   - $HOME/.mix/archives
+  - $HOME/.kiex/mix
 notifications:
   email:
     - priestjim@gmail.com
