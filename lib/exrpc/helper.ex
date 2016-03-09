@@ -54,7 +54,7 @@ defmodule ExRPC.Helper do
   @doc """
     Sets a socket to active once mode
   """
-  @spec activate_socket(port) :: :ok
+  @spec activate_socket(:inet.socket) :: :ok
   def activate_socket(socket) when is_port(socket) do
     :ok = :inet.setopts(socket, active: :once)
   end
@@ -82,12 +82,11 @@ defmodule ExRPC.Helper do
   @doc """
     Retrieves an Elixir node's IP as it is seen by the VM
   """
-  @spec get_remote_node_ip(node) :: {127,0,0,1}
+  @spec get_remote_node_ip(atom) :: :inet.ip4_address
   def get_remote_node_ip(node) when node === node() do
     {127,0,0,1}
   end
 
-  @spec get_remote_node_ip(node) :: :inet.ip4_address
   def get_remote_node_ip(node) do
     {:ok, node_info} = :net_kernel.node_info(node)
     address_info = Keyword.get(node_info, :address)

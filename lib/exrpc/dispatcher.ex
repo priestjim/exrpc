@@ -28,7 +28,7 @@ defmodule ExRPC.Dispatcher do
     Starts a new `ExRPC.Client` server through the appropriate
     supervisor.
   """
-  @spec start_client(node) :: {:ok, pid}
+  @spec start_client(node) :: {:ok, pid} | {:error, any}
   def start_client(node) when is_atom(node) do
     GenServer.call(__MODULE__, {:start_client,node}, :infinity)
   end

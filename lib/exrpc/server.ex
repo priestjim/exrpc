@@ -18,7 +18,6 @@ defmodule ExRPC.Server do
 
   # State record
   defrecord :state,
-    client_ip: nil,
     client_node: nil,
     listener_sock: nil,
     acceptor_pid: nil,
@@ -63,13 +62,12 @@ defmodule ExRPC.Server do
     Initializes the server, enabling exit trapping
     in order to clean up gracefully in case of termination
   """
-  @spec init(node) :: {:ok, nil}
+  @spec init(atom) :: {:ok, nil} | {:stop, any}
   def init(client_node) do
-    client_ip = ExRPC.Helper.get_remote_node_ip(client_node)
     case :gen_tcp.listen(0, ExRPC.Helper.default_tcp_opts()) do
       {:ok, socket} ->
         {:ok, ref} = :prim_inet.async_accept(socket, -1)
-        {:ok, state(client_ip: client_ip, client_node: client_node,
+        {:ok, state(client_node: client_node,
                      listener_sock: socket, acceptor_ref: ref)}
       {:error, reason} ->
         {:stop, reason}
@@ -79,7 +77,7 @@ defmodule ExRPC.Server do
   @doc """
     Returns the dynamically allocated port by `gen_tcp`
   """
-  @spec handle_call(:get_port, tuple, record(:state)) :: {:ok, pos_integer}
+  @spec handle_call(atom, tuple, record(:state)) :: {:reply, {:ok, pos_integer}, record(:state)}
   def handle_call(:get_port, _from, state(listener_sock: socket) = state_rec) do
     {:ok, port} = :inet.port(socket)
     {:reply, {:ok,port}, state_rec}
@@ -88,7 +86,6 @@ defmodule ExRPC.Server do
   @doc """
     Gracefully stops the server
   """
-  @spec handle_call(:stop, tuple, record(:state)) :: :ok
   def handle_call(:stop, _from, state_rec) do
     {:stop, :normal, :ok, state_rec}
   end
@@ -97,14 +94,15 @@ defmodule ExRPC.Server do
     Receives an incoming connection to the listening port and dispatches
     an acceptor to handle subsequent communication
   """
-  @spec handle_info({:inet_async, port, tuple, tuple}, record(:state)) :: {:noreply, record(:state)} | {:stop, {:badtcp, any}, record(:state)}
+  @spec handle_info({:inet_async, port, tuple, tuple}, record(:state) | {:EXIT, pid, any}) ::
+    {:noreply, record(:state)} | {:stop, {:badtcp, any}, record(:state)}
   def handle_info({:inet_async, listener_sock, acceptor_ref, {:ok, acceptor_sock}},
-                  state(client_ip: client_ip, client_node: client_node, listener_sock: listener_sock, acceptor_ref: acceptor_ref) = state_rec) do
+                  state(client_node: client_node, listener_sock: listener_sock, acceptor_ref: acceptor_ref) = state_rec) do
     try do
       # Start an acceptor process. We need to provide the acceptor
       # process with our designated node IP and name so enforcement
       # of those attributes can be made for security reasons.
-      {:ok, acceptor_pid} = ExRPC.Supervisor.Acceptor.start_child(client_ip, client_node)
+      {:ok, acceptor_pid} = ExRPC.Supervisor.Acceptor.start_child(client_node)
       # Link to acceptor, if they die so should we, since we are single-receiver
       # to single-acceptor service
       true = :erlang.link(acceptor_pid)
@@ -136,7 +134,6 @@ defmodule ExRPC.Server do
   @doc """
     Handles async socket errors gracefully
   """
-  @spec handle_info({:inet_async, port, tuple, any}, record(:state)) :: {:stop, {:badtcp, any}, record(:state)}
   def handle_info({:inet_async, listener_sock, acceptor_ref, error},
                   state(listener_sock: listener_sock, acceptor_ref: acceptor_ref) = state_rec) do
     {:stop, {:badtcp, error}, state_rec}
@@ -145,7 +142,6 @@ defmodule ExRPC.Server do
   @doc """
     Handle exit messages from the child `ExRPC.Acceptor` gracefully
   """
-  @spec handle_info({:EXIT, pid, any}, record(:state)) :: {:stop, any, record(:state)}
   def handle_info({:EXIT, acceptor_pid, reason}, state(acceptor_pid: acceptor_pid) = state_rec) do
     {:stop, reason, state_rec}
   end

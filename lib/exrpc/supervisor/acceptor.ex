@@ -15,7 +15,7 @@ defmodule ExRPC.Supervisor.Acceptor do
   use Supervisor
 
   # Supervision attributes
-  @child_spec [restart: :transient, timeout: 5_000]
+  @child_spec [restart: :temporary, timeout: 5_000]
   @strategy [strategy: :simple_one_for_one, max_restarts: 100, max_seconds: 1]
 
   # ===================================================
@@ -33,9 +33,9 @@ defmodule ExRPC.Supervisor.Acceptor do
   @doc """
     Starts a local RPC acceptor process
   """
-  @spec start_child(:inet.ip4_address, node) :: {:ok, pid}
-  def start_child(client_ip, node) when is_tuple(client_ip) and is_atom(node) do
-    Supervisor.start_child(__MODULE__, [client_ip,node])
+  @spec start_child(node) :: {:ok, pid}
+  def start_child(node) when is_atom(node) do
+    Supervisor.start_child(__MODULE__, [node])
   end
 
   @doc """
@@ -55,7 +55,7 @@ defmodule ExRPC.Supervisor.Acceptor do
     Initializes the supervisor using the simple one for one strategy, allowing
     to dynamically register acceptors, one per local server
   """
-  @spec init(nil) :: tuple
+  @spec init(nil) :: any
   def init(nil) do
     supervise([worker(ExRPC.Acceptor, [], [{:name, ExRPC.Acceptor}|@child_spec])], @strategy)
   end

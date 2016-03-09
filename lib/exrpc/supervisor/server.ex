@@ -15,7 +15,7 @@ defmodule ExRPC.Supervisor.Server do
   use Supervisor
 
   # Supervision attributes
-  @child_spec [restart: :transient, timeout: 5_000]
+  @child_spec [restart: :temporary, timeout: 5_000]
   @strategy [strategy: :simple_one_for_one, max_restarts: 100, max_seconds: 1]
 
   # ===================================================
@@ -58,7 +58,7 @@ defmodule ExRPC.Supervisor.Server do
     Initializes the supervisor using the simple one for one strategy, allowing
     to dynamically register servers per remote client
   """
-  @spec init(nil) :: tuple
+  @spec init(nil) :: any()
   def init(nil) do
     supervise([worker(ExRPC.Server, [], [{:name, ExRPC.Server}|@child_spec])], @strategy)
   end

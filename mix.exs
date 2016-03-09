@@ -12,12 +12,12 @@ defmodule ExRPC.Mixfile do
     elixir_release = "#{major}.#{minor}.#{patch}"
     [
       app: :exrpc,
-      description: "ExRPC is an out-of band RPC application and library that uses multiple TCP ports to send and receive data between Elixir nodes",
-      version: "1.0.0",
+      description: "ExRPC is a scalable RPC library for Erlang-VM based languages.",
+      version: "0.9.0",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       language: :elixir,
-      elixir: "~> 1.1",
+      elixir: "~> 1.2",
       deps: [],
       aliases: aliases,
       package: package,
@@ -40,20 +40,7 @@ defmodule ExRPC.Mixfile do
           ],
         plt_file: "_plt/otp-#{otp_release}_elixir-#{elixir_release}.plt",
         plt_add_deps: true,
-        flags: ["-Wno_return",
-          "-Wno_unused",
-          "-Wno_improper_lists",
-          "-Wno_fun_app",
-          "-Wno_match",
-          "-Wno_opaque",
-          "-Wno_fail_call",
-          "-Wno_contracts",
-          "-Wno_behaviours",
-          "-Wno_undefined_callbacks",
-          "-Wunmatched_returns",
-          "-Werror_handling",
-          "-Wrace_conditions"
-        ]
+        flags: ["-Wno_return", "-Wno_behaviours", "-Wunmatched_returns", "-Werror_handling"]
       ]
     ]
   end

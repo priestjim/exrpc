@@ -19,7 +19,6 @@ defmodule ExRPC.Acceptor do
   # State record
   defrecord :state,
     socket: nil,
-    client_ip: nil,
     client_node: nil,
     send_timeout: :infinity,
     inactivity_timeout: :infinity
@@ -31,10 +30,10 @@ defmodule ExRPC.Acceptor do
   @doc """
     Starts an ExRPC `gen_tcp` acceptor
   """
-  @spec start_link(:inet.ip4_address, node) :: {:ok, pid}
-  def start_link(client_ip, node) when is_tuple(client_ip) and is_atom(node) do
+  @spec start_link(atom) :: {:ok, pid}
+  def start_link(node) when is_atom(node) do
     name = ExRPC.Helper.make_process_name(:acceptor, node)
-    :gen_fsm.start_link({:local, name}, __MODULE__, {client_ip, node}, spawn_opt: [priority: :high])
+    :gen_fsm.start_link({:local, name}, __MODULE__, {node}, spawn_opt: [priority: :high])
   end
 
   @doc """
@@ -53,14 +52,13 @@ defmodule ExRPC.Acceptor do
   @doc """
     Initializes the acceptor state machine
   """
-  @spec init({:inet.ip4_address, node}) :: {:ok, nil}
-  def init({client_ip, node}) do
+  @spec init({node}) :: {:ok, :waiting_for_socket, record(:state)}
+  def init({node}) do
     :ok = :net_kernel.monitor_nodes(true, [:nodedown_reason])
     send_to = Application.get_env(:exrpc, :send_timeout)
     inactivity_to = Application.get_env(:exrpc, :server_inactivity_timeout)
     # Store the client's IP and the node in our state
-    {:ok, :waiting_for_socket, state(client_ip: client_ip,
-                                     client_node: node,
+    {:ok, :waiting_for_socket, state(client_node: node,
                                      send_timeout: send_to,
                                      inactivity_timeout: inactivity_to)}
   end
@@ -69,19 +67,12 @@ defmodule ExRPC.Acceptor do
     State that gets triggered when the acceptor process receives ownership of the socket
     and sets up the socket for data operation right after filtering the client's IP address
   """
-  @spec waiting_for_socket({:socket_ready, :inet.socket}, record(:state)) ::
-    {:stop, {:badtcp,:invalid_client_ip}, record(:state)} | {:next_state, :waiting_for_data, record(:state)}
-  def waiting_for_socket({:socket_ready, socket}, state(client_ip: client_ip, send_timeout: send_to) = state_rec) do
-    # Filter the ports we're willing to accept connections from
-    {:ok, {ip, _port}} = :inet.peername(socket)
-    if client_ip != ip do
-      {:stop, {:badtcp,:invalid_client_ip}, state_rec}
-    else
-      # Now we own the socket
-      :ok = :inet.setopts(socket, [{:send_timeout, send_to}|ExRPC.Helper.default_tcp_opts()])
-      :ok = ExRPC.Helper.activate_socket(socket)
-      {:next_state, :waiting_for_data, state(state_rec, socket: socket)}
-    end
+  @spec waiting_for_socket({:socket_ready, :inet.socket}, record(:state)) :: {:next_state, :waiting_for_data, record(:state)}
+  def waiting_for_socket({:socket_ready, socket}, state(send_timeout: send_to) = state_rec) do
+    # Now we own the socket
+    :ok = :inet.setopts(socket, [{:send_timeout, send_to}|ExRPC.Helper.default_tcp_opts()])
+    :ok = ExRPC.Helper.activate_socket(socket)
+    {:next_state, :waiting_for_data, state(state_rec, socket: socket)}
   end
 
   @doc """
@@ -94,8 +85,8 @@ defmodule ExRPC.Acceptor do
     # the data
     try do
       case :erlang.binary_to_term(data) do
-        {^node, client_pid, ref, {:call, m, f, a}} ->
-          {:ok, _worker_pid} = Task.Supervisor.start_child(ExRPC.Supervisor.ServerWorker, __MODULE__, :call_worker, [self(), client_pid, ref, m, f, a])
+        {^node, client_pid, ref, {call_type, m, f, a}} when call_type == :call or call_type == :async_call ->
+          {:ok, _worker_pid} = Task.Supervisor.start_child(ExRPC.Supervisor.ServerWorker, __MODULE__, :call_worker, [self(), call_type, client_pid, ref, m, f, a])
           :ok = ExRPC.Helper.activate_socket(socket)
           {:next_state, :waiting_for_data, state_rec, ttl}
         {^node, {:cast, m, f, a}} ->
@@ -124,8 +115,8 @@ defmodule ExRPC.Acceptor do
   @doc """
     Incoming data handlers
   """
-  @spec handle_info({:tcp, :inet.ip4_address, any}, :waiting_for_data, record(:state)) ::
-    {:stop, {:badtcp,:erroneous_data | :corrupt_data}, record(:state)} | {:next_state, :waiting_for_data, record(:state)}
+  @spec handle_info({:tcp, :inet.socket, binary} | tuple, :waiting_for_data, record(:state)) ::
+    {:stop, {:badtcp, any}, record(:state)} | {:next_state, :waiting_for_data, record(:state), timeout()}
   def handle_info({:tcp, socket, data}, :waiting_for_data, state(socket: socket) = state_rec) when socket != nil do
     waiting_for_data({:data, data}, state_rec)
   end
@@ -133,10 +124,9 @@ defmodule ExRPC.Acceptor do
   @doc """
     Handle a call worker message
   """
-  @spec handle_info({:call_reply, any}, :waiting_for_data, record(:state)) ::
-    {:stop, {:badtcp, any}, record(:state)} | {:next_state, :waiting_for_data, record(:state), timeout}
-  def handle_info({:call_reply, packet_bin}, :waiting_for_data, state(socket: socket, inactivity_timeout: ttl) = state_rec)
-  when socket != nil do
+  def handle_info({call_type, _call_reply} = packet, :waiting_for_data, state(socket: socket, inactivity_timeout: ttl) = state_rec)
+  when socket != nil and (call_type == :call_reply or call_type == :async_call_reply) do
+    packet_bin = :erlang.term_to_binary(packet)
     case :gen_tcp.send(socket, packet_bin) do
       :ok ->
         {:next_state, :waiting_for_data, state_rec, ttl}
@@ -163,7 +153,6 @@ defmodule ExRPC.Acceptor do
   @doc """
     Stub callback for generic info message
   """
-  @spec handle_info(any, atom, record(:state)) :: {:stop, {atom, :unknown_message, any}, record(:state)}
   def handle_info(message, state_name, state_rec), do: {:stop, {state_name, :unknown_message, message}, state_rec}
 
   @doc """
@@ -178,8 +167,8 @@ defmodule ExRPC.Acceptor do
     This is the function/process that the task supervisor will
     launch to run the RPC call from a remote node.
   """
-  @spec call_worker(tuple, pid, reference, module, function, list) :: any
-  def call_worker(caller, client_pid, ref, m, f, a) do
+  @spec call_worker(tuple, :call | :async_call, pid, reference, module, function, list) :: any
+  def call_worker(caller, call_type, client_pid, ref, m, f, a) do
     # If called MFA returns exception, not of type term(),
     # this fails the term_to_binary coversion and crashes the worker process
     # which manifests as a timeout on the client side. Wrapping it in a try/catch
@@ -191,8 +180,10 @@ defmodule ExRPC.Acceptor do
       :error, what -> {:badrpc, {:'EXIT', {what, :erlang.get_stacktrace()}}}
       :exit, what -> {:badrpc, {:'EXIT', what}}
     end
-    packet_bin = :erlang.term_to_binary({client_pid, ref, result})
-    send(caller, {:call_reply, packet_bin})
+    case call_type do
+      :call -> send(caller, {:call_reply, {client_pid, ref, result}})
+      :async_call -> send(caller, {:async_call_reply, {client_pid, ref, result}})
+    end
   end
 
   @doc """

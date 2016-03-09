@@ -48,7 +48,7 @@ defmodule ExRPC do
 
     If the RPC calls finishes and sends the result back to the client, those results will be dropped.
   """
-  @spec call(node, module, function, list, timeout | nil, timeout | nil) :: {:badtcp | :badrpc, any} | any
+  @spec call(atom, atom, atom, list, timeout | nil, timeout | nil) :: {:badtcp | :badrpc, any} | any
   def call(node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
@@ -63,7 +63,7 @@ defmodule ExRPC do
     sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
     (an asynchronous cast).
   """
-  @spec cast(node, module, function, list, timeout | nil) :: true
+  @spec cast(atom, atom, atom, list, timeout | nil) :: true
   def cast(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and
@@ -78,7 +78,7 @@ defmodule ExRPC do
     (an asynchronous cast). In contrast to the simple `cast` functin, this function will
     return an error if the connection to the remote node fails (hence the `safe` prefix).
   """
-  @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  @spec safe_cast(atom, atom, atom, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def safe_cast(node, m, f, a \\ [], send_to \\ nil)
   when is_atom(node) and is_atom(m) and
        is_atom(f) and is_list(a) and

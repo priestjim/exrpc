@@ -31,7 +31,7 @@ defmodule ExRPC.Client do
   @doc """
     Starts an ExRPC `gen_tcp` client
   """
-  @spec start_link(node) :: {:ok, pid}
+  @spec start_link(atom) :: {:ok, pid}
   def start_link(server_node) when is_atom(server_node) do
     GenServer.start_link(__MODULE__, server_node, name: server_node, spawn_opt: [priority: :high])
   end
@@ -41,7 +41,7 @@ defmodule ExRPC.Client do
     performing a "protected" {`m`,`f`,`a`} call and returning the result within
     `recv_to` milliseconds.
   """
-  @spec call(node, module, function, list, timeout | nil, timeout | nil) :: {:badtcp | :badrpc, any} | any
+  @spec call(atom, atom, atom, list, timeout | nil, timeout | nil) :: {:badtcp | :badrpc, any} | any
   def call(server_node, m, f, a \\ [], recv_to \\ nil, send_to \\ nil)
   when is_atom(server_node) and is_atom(m) and
        is_atom(f) and is_list(a) and
@@ -71,7 +71,7 @@ defmodule ExRPC.Client do
     sending a "protected" {`m`,`f`,`a`} call that will execute but never return the result
     (an asynchronous cast).
   """
-  @spec cast(node, module, function, list, timeout | nil) :: true
+  @spec cast(atom, atom, atom, list, timeout | nil) :: true
   def cast(server_node, m, f, a \\ [], send_to \\ nil)
   when is_atom(server_node) and is_atom(m) and
        is_atom(f) and is_list(a) and
@@ -101,7 +101,7 @@ defmodule ExRPC.Client do
     (an asynchronous cast). In contrast to simple `cast`, this function will return an error
     if the remote node is unreachable.
   """
-  @spec safe_cast(node, module, function, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
+  @spec safe_cast(atom, atom, atom, list, timeout | nil) :: {:badtcp | :badrpc, any} | true
   def safe_cast(server_node, m, f, a \\ [], send_to \\ nil)
   when is_atom(server_node) and is_atom(m) and
        is_atom(f) and is_list(a) and
@@ -232,7 +232,7 @@ defmodule ExRPC.Client do
   def handle_info({:tcp,socket,data}, state(socket: socket, inactivity_timeout: ttl) = state_rec) do
     try do
       case :erlang.binary_to_term(data) do
-        {task_pid, ref, reply} ->
+        {:call_reply, {task_pid, ref, reply}} ->
           if Process.alive?(task_pid) do
             send(task_pid, {:reply,ref,reply})
           else
@@ -321,8 +321,7 @@ defmodule ExRPC.Client do
   end
 
   # Merges user-define timeout values with state timeout values
-  @spec merge_timeout_values(timeout | nil, timeout | nil, timeout | nil, timeout | nil) ::
-                            {timeout | nil, timeout | nil, timeout | nil, timeout | nil}
+  @spec merge_timeout_values(timeout | nil, timeout | nil, timeout | nil, timeout | nil) :: {timeout, timeout}
   defp merge_timeout_values(state_recv_to, nil, state_send_to, nil), do: ({state_recv_to, state_send_to})
   defp merge_timeout_values(_state_recv_to, user_recv_to, state_send_to, nil), do: ({user_recv_to, state_send_to})
   defp merge_timeout_values(state_recv_to, nil, _state_send_to, user_send_to), do: ({state_recv_to, user_send_to})
